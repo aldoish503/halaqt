@@ -656,8 +656,16 @@ tr:hover {
 }
 
 .print-meta {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   text-align: left;
+  direction: ltr;
+  border: 1.5px solid var(--gold-600);
+  padding: 8px 14px;
+  border-radius: 6px;
+  background: #fcfbfa;
+  line-height: 1.6;
+  font-weight: 700;
+  color: #111;
 }
 
 .print-body {
