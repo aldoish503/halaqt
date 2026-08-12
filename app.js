@@ -832,40 +832,44 @@ function loadGoogleSheetViaJSONP(sheetUrl, isQuiet = false) {
   if (!sheetUrl) return;
   
   const sheetIdMatch = sheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-  const gidMatch = sheetUrl.match(/[?&]gid=([0-9]+)/);
   if (!sheetIdMatch) {
     if (!isQuiet) showToast('رابط Google Sheet غير صحيح', true);
     return;
   }
   
   const sheetId = sheetIdMatch[1];
-  const gid = gidMatch ? gidMatch[1] : '0';
-  
-  const callbackName = 'gvizCallback_' + Math.floor(Math.random() * 1000000);
-  
-  window[callbackName] = function(response) {
-    delete window[callbackName];
-    const scriptEl = document.getElementById(callbackName);
-    if (scriptEl) scriptEl.remove();
-    
-    if (!response || response.status !== 'ok' || !response.table) {
-      if (!isQuiet) showToast('تعذر قراءة بيانات الشيت، تأكد من إعداد المشاركة للعامة', true);
-      return;
+
+  // 1. جلب الموظفين من تبويب "الموارد_البشرية"
+  const cbEmps = 'gvizEmps_' + Math.floor(Math.random() * 1000000);
+  window[cbEmps] = function(resp) {
+    delete window[cbEmps];
+    const s = document.getElementById(cbEmps);
+    if (s) s.remove();
+    if (resp && resp.status === 'ok' && resp.table) {
+      parseJSONPTableAndImport(resp.table, isQuiet, 'employees');
     }
-    
-    parseJSONPTableAndImport(response.table, isQuiet);
   };
   
-  const jsonpUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:${callbackName}&gid=${gid}`;
-  const script = document.createElement('script');
-  script.id = callbackName;
-  script.src = jsonpUrl;
-  script.onerror = function() {
-    delete window[callbackName];
-    script.remove();
-    if (!isQuiet) showToast('تعذر الاتصال بـ Google Sheets. تأكد من فتح المشاركة للعامة', true);
+  const scriptEmps = document.createElement('script');
+  scriptEmps.id = cbEmps;
+  scriptEmps.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:${cbEmps}&sheet=${encodeURIComponent('الموارد_البشرية')}`;
+  document.body.appendChild(scriptEmps);
+
+  // 2. جلب المهام من تبويب المهام (gid=0)
+  const cbTasks = 'gvizTasks_' + Math.floor(Math.random() * 1000000);
+  window[cbTasks] = function(resp) {
+    delete window[cbTasks];
+    const s = document.getElementById(cbTasks);
+    if (s) s.remove();
+    if (resp && resp.status === 'ok' && resp.table) {
+      parseJSONPTableAndImport(resp.table, isQuiet, 'tasks');
+    }
   };
-  document.body.appendChild(script);
+
+  const scriptTasks = document.createElement('script');
+  scriptTasks.id = cbTasks;
+  scriptTasks.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:${cbTasks}&gid=0`;
+  document.body.appendChild(scriptTasks);
 }
 
 function autoSyncFromGoogleSheetQuietly(rawUrl) {
@@ -894,6 +898,68 @@ function importLocalCSV(event) {
     closeSyncModal();
   };
   reader.readAsText(file);
+}
+
+function parseJSONPTableAndImport(table, isQuiet = false, forceType = 'auto') {
+  if (!table || !table.rows || !table.rows.length) return;
+
+  const rawRows = table.rows.map(r => r.c ? r.c.map(cell => cell ? (cell.v !== null ? String(cell.v) : '') : '') : []);
+  if (!rawRows.length) return;
+
+  if (forceType === 'employees') {
+    const importedEmps = [];
+    for (let i = 0; i < rawRows.length; i++) {
+      const row = rawRows[i];
+      if (!row || row.join('').trim() === '') continue;
+      if (i === 0 && (row[1] || row[0] || '').includes('اسم')) continue;
+
+      importedEmps.push({
+        id: row[0] || String(i + 1),
+        name: row[1] || 'بدون اسم',
+        nationalId: row[7] || row[2] || '',
+        nationality: row[8] || 'سعودي',
+        job: row[3] || 'معلم قرآن',
+        period: row[4] || '',
+        unit: 'حلقات القرآن الكريم',
+        section: '',
+        phone: '',
+        age: '',
+        task: row[5] || '',
+        note: row[6] || ''
+      });
+    }
+
+    if (importedEmps.length) {
+      APP_DATA.employees = importedEmps;
+      saveData();
+      if (!isQuiet) showToast(`تم جلب وتطبيق ${importedEmps.length} موظف من Google Sheet بنجاح!`);
+    }
+    return;
+  }
+
+  if (forceType === 'tasks') {
+    const importedTasks = [];
+    for (let i = 0; i < rawRows.length; i++) {
+      const row = rawRows[i];
+      if (!row || row.join('').trim() === '') continue;
+      if (i === 0 && (row[0] || '').includes('العنوان')) continue;
+
+      importedTasks.push({
+        title: row[0] || 'مهمة بدون عنوان',
+        assignedTo: row[1] || 'مكتب رئيس الوحدة',
+        priority: row[2] || 'مهمة غير عاجلة',
+        dueDate: row[3] || '',
+        status: row[4] || 'قيد التنفيذ'
+      });
+    }
+
+    if (importedTasks.length) {
+      APP_DATA.tasks = importedTasks;
+      saveData();
+      if (!isQuiet) showToast(`تم جلب وتحديث ${importedTasks.length} مهمة من Google Sheet بنجاح`);
+    }
+    return;
+  }
 }
 
 function parseCSVAndImport(csvText, isQuiet = false) {
