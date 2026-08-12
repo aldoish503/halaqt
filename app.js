@@ -781,64 +781,60 @@ function closeSyncModal() {
   document.getElementById('syncModal').classList.add('hidden');
 }
 
-function formatGoogleSheetUrl(rawUrl) {
-  if (!rawUrl) return '';
-  let url = rawUrl.trim();
+function loadGoogleSheetViaJSONP(sheetUrl, isQuiet = false) {
+  if (!sheetUrl) return;
   
-  if (url.includes('/spreadsheets/d/')) {
-    const sheetIdMatch = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-    const gidMatch = url.match(/[?&]gid=([0-9]+)/);
-    if (sheetIdMatch && sheetIdMatch[1]) {
-      const sheetId = sheetIdMatch[1];
-      const gid = gidMatch ? gidMatch[1] : '0';
-      return `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${gid}`;
-    }
+  const sheetIdMatch = sheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  const gidMatch = sheetUrl.match(/[?&]gid=([0-9]+)/);
+  if (!sheetIdMatch) {
+    if (!isQuiet) showToast('رابط Google Sheet غير صحيح', true);
+    return;
   }
-  return url;
+  
+  const sheetId = sheetIdMatch[1];
+  const gid = gidMatch ? gidMatch[1] : '0';
+  
+  const callbackName = 'gvizCallback_' + Math.floor(Math.random() * 1000000);
+  
+  window[callbackName] = function(response) {
+    delete window[callbackName];
+    const scriptEl = document.getElementById(callbackName);
+    if (scriptEl) scriptEl.remove();
+    
+    if (!response || response.status !== 'ok' || !response.table) {
+      if (!isQuiet) showToast('تعذر قراءة بيانات الشيت، تأكد من إعداد المشاركة للعامة', true);
+      return;
+    }
+    
+    parseJSONPTableAndImport(response.table, isQuiet);
+  };
+  
+  const jsonpUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:${callbackName}&gid=${gid}`;
+  const script = document.createElement('script');
+  script.id = callbackName;
+  script.src = jsonpUrl;
+  script.onerror = function() {
+    delete window[callbackName];
+    script.remove();
+    if (!isQuiet) showToast('تعذر الاتصال بـ Google Sheets. تأكد من فتح المشاركة للعامة', true);
+  };
+  document.body.appendChild(script);
 }
 
 function autoSyncFromGoogleSheetQuietly(rawUrl) {
-  const csvUrl = formatGoogleSheetUrl(rawUrl);
-  if (!csvUrl) return;
-
-  fetch(csvUrl)
-    .then(res => {
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return res.text();
-    })
-    .then(text => {
-      if (text && !text.includes('<!DOCTYPE html>')) {
-        parseCSVAndImport(text, true);
-      }
-    })
-    .catch(() => {});
+  loadGoogleSheetViaJSONP(rawUrl, true);
 }
 
 function syncFromGoogleSheet() {
   const inputVal = document.getElementById('sheetUrlInput').value.trim();
   if (!inputVal) return showToast('أدخل رابط شيت جوجل', true);
 
-  const csvUrl = formatGoogleSheetUrl(inputVal);
   APP_DATA.sheetUrl = inputVal;
   saveData();
 
   showToast('جاري قراءة وتوليد البيانات من Google Sheet...');
-  fetch(csvUrl)
-    .then(res => {
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return res.text();
-    })
-    .then(text => {
-      if (text.includes('<!DOCTYPE html>') || text.includes('Sign in')) {
-        showToast('يرجى تغيير مشاركة الشيت في جوجل إلى "أي شخص لديه الرابط يمكنه العرض"', true);
-        return;
-      }
-      parseCSVAndImport(text);
-      closeSyncModal();
-    })
-    .catch(err => {
-      showToast('تعذر الجلب. التأكد من مشاركة الشيت للعامة ("أي شخص لديه الرابط")', true);
-    });
+  loadGoogleSheetViaJSONP(inputVal, false);
+  closeSyncModal();
 }
 
 function importLocalCSV(event) {
