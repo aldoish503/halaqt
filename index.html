@@ -625,8 +625,13 @@
       </p>
 
       <div class="field-group">
-        <label>رابط نشر شيت الموظفين (CSV Public URL)</label>
-        <input type="text" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv">
+        <label>رابط قراءة شيت الموظفين والمهام (Google Sheet Public URL)</label>
+        <input type="text" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/.../edit#gid=...">
+      </div>
+
+      <div class="field-group" style="margin-top:10px;">
+        <label>رابط الحفظ التلقائي في الشيت (Webhook URL - خيار الحفظ الفوري)</label>
+        <input type="text" id="sheetWebhookInput" placeholder="https://script.google.com/macros/s/.../exec" onchange="localStorage.setItem('AGY_UNIT_WEBHOOK_URL', this.value.trim())">
       </div>
 
       <div class="btn-row">

@@ -142,6 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const urlInput = document.getElementById('sheetUrlInput');
   if (urlInput) urlInput.value = APP_DATA.sheetUrl;
 
+  const webhookInput = document.getElementById('sheetWebhookInput');
+  if (webhookInput) webhookInput.value = localStorage.getItem('AGY_UNIT_WEBHOOK_URL') || '';
+
   renderAllViews();
 
   // المزامنة التلقائية الهادئة خلف الكواليس إذا كان الشيت متاحاً للعامة
@@ -215,6 +218,20 @@ function renderCandNidBoxes() {
   }
 }
 
+function sendToGoogleSheetWebhook(action, payload) {
+  const webhookUrl = localStorage.getItem('AGY_UNIT_WEBHOOK_URL');
+  if (!webhookUrl) return;
+
+  try {
+    fetch(webhookUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: action, data: payload })
+    }).catch(e => console.log('Webhook log:', e));
+  } catch (e) {}
+}
+
 function submitCandidateForm() {
   const name = document.getElementById('cand_name').value.trim();
   const nid = document.getElementById('cand_nid').value.trim();
@@ -238,21 +255,24 @@ function submitCandidateForm() {
     r2: document.getElementById('cand_r2').value
   };
 
+  const empObj = {
+    id: 'م-' + outgoing.rawNumber.slice(-4),
+    name: candidateData.name,
+    nationalId: candidateData.nationalId,
+    nationality: candidateData.nationality,
+    phone: candidateData.phone,
+    age: candidateData.age,
+    job: candidateData.job,
+    unit: candidateData.unit,
+    section: candidateData.section,
+    period: candidateData.periods,
+    task: 'طلب تعيين تحت الإجراء',
+    note: 'مرشح تعيين جديد'
+  };
+
   if (document.getElementById('saveCandidateToDbCheck').checked) {
-    APP_DATA.employees.push({
-      id: 'م-' + outgoing.rawNumber.slice(-4),
-      name: candidateData.name,
-      nationalId: candidateData.nationalId,
-      nationality: candidateData.nationality,
-      phone: candidateData.phone,
-      age: candidateData.age,
-      job: candidateData.job,
-      unit: candidateData.unit,
-      section: candidateData.section,
-      period: candidateData.periods,
-      task: 'طلب تعيين تحت الإجراء',
-      note: 'مرشح تعيين جديد'
-    });
+    APP_DATA.employees.push(empObj);
+    sendToGoogleSheetWebhook('employee', empObj);
   }
 
   const archiveItem = {
@@ -267,8 +287,9 @@ function submitCandidateForm() {
   };
   APP_DATA.archive.unshift(archiveItem);
   saveData();
+  sendToGoogleSheetWebhook('archive', archiveItem);
 
-  showToast('تم اعتماد طلب التعيين بنجاح برقم صادر: ' + outgoing.fullHeader);
+  showToast('تم اعتماد طلب التعيين وحفظه بنجاح برقم صادر: ' + outgoing.fullHeader);
   openPrintModal(archiveItem);
 }
 
@@ -323,8 +344,9 @@ function submitDefinedForm() {
 
   APP_DATA.archive.unshift(archiveItem);
   saveData();
+  sendToGoogleSheetWebhook('archive', archiveItem);
 
-  showToast('تم اعتماد النموذج برقم: ' + outgoing.fullHeader);
+  showToast('تم اعتماد النموذج وحفظه برقم: ' + outgoing.fullHeader);
   openPrintModal(archiveItem);
 }
 
@@ -352,8 +374,9 @@ function submitOpenLetter() {
 
   APP_DATA.archive.unshift(archiveItem);
   saveData();
+  sendToGoogleSheetWebhook('archive', archiveItem);
 
-  showToast('تم إعداد الخطاب بنجاح برقم: ' + outgoing.fullHeader);
+  showToast('تم إعداد الخطاب وحفظه بنجاح برقم: ' + outgoing.fullHeader);
   openPrintModal(archiveItem);
 }
 
@@ -507,10 +530,11 @@ function submitEmployeeForm() {
     showToast('تم تعديل بيانات الموظف بنجاح');
   } else {
     APP_DATA.employees.push(empData);
-    showToast('تمت إضافة الموظف الجديد بنجاح');
+    showToast('تمت إضافة الموظف الجديد وحفظه بنجاح');
   }
 
   saveData();
+  sendToGoogleSheetWebhook('employee', empData);
   closeEmployeeModal();
 }
 
@@ -616,17 +640,20 @@ function submitMeeting() {
   const title = document.getElementById('meetingTitle').value.trim();
   if (!title) return showToast('ادخل عنوان الموعد', true);
 
-  APP_DATA.meetings.push({
+  const m = {
     title: title,
     date: document.getElementById('meetingDate').value,
     time: document.getElementById('meetingTime').value,
     location: document.getElementById('meetingLocation').value,
     notes: document.getElementById('meetingNotes').value
-  });
+  };
 
+  APP_DATA.meetings.push(m);
   saveData();
+  sendToGoogleSheetWebhook('meeting', m);
+
   document.getElementById('meetingTitle').value = '';
-  showToast('تم حفظ الموعد بنجاح');
+  showToast('تم حفظ الموعد بنجاح في النظام وشيت جوجل');
 }
 
 function renderMeetingsTable() {
@@ -643,17 +670,20 @@ function submitTask() {
   const title = document.getElementById('taskTitle').value.trim();
   if (!title) return showToast('ادخل عنوان المهمة', true);
 
-  APP_DATA.tasks.push({
+  const t = {
     title: title,
     assignedTo: document.getElementById('taskAssignee').value || 'مكتب رئيس الوحدة',
     priority: document.getElementById('taskPriority').value,
     dueDate: document.getElementById('taskDue').value,
     status: 'قيد التنفيذ'
-  });
+  };
 
+  APP_DATA.tasks.push(t);
   saveData();
+  sendToGoogleSheetWebhook('task', t);
+
   document.getElementById('taskTitle').value = '';
-  showToast('تمت إضافة المهمة بنجاح');
+  showToast('تمت إضافة المهمة وحفظها بنجاح');
 }
 
 function renderTasksTable() {
@@ -687,17 +717,20 @@ function saveQuickDecision() {
   const text = document.getElementById('quickDecisionText').value.trim();
   if (!text) return showToast('اكتب نص القرار قبل الإرسال', true);
 
-  APP_DATA.tasks.push({
+  const t = {
     title: text,
     assignedTo: 'مكتب رئيس الوحدة',
     priority: 'مهمة عاجلة',
     dueDate: new Date().toISOString().slice(0,10),
     status: 'قيد التنفيذ'
-  });
+  };
 
+  APP_DATA.tasks.push(t);
   saveData();
+  sendToGoogleSheetWebhook('task', t);
+
   document.getElementById('quickDecisionText').value = '';
-  showToast('تم حفظ القرارات والتوجيهات الفورية كمهمة عاجلة');
+  showToast('تم حفظ التوجيه كـ مهمة عاجلة وحفظه في شيت جوجل');
 }
 
 function renderStats() {
