@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نظام إدارة مكتب رئيس وحدة الشؤون التعليمية</title>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <!-- الترويسة الرسمية -->
+  <header class="app-header">
+    <div class="header-emblem">
+      <img src="https://prh.gov.sa/images/logo_elharamain.png" alt="شعار رئاسة الشؤون الدينية" class="header-logo" onerror="this.style.display='none'; document.getElementById('altLogo').style.display='block';">
+      <div id="altLogo" class="emblem-placeholder" style="display:none;">رئاسة الشؤون الدينية<br>باللمسجد النبوي</div>
+    </div>
+
+    <div class="header-title">
+      <h1>نظام إدارة مكتب رئيس وحدة الشؤون التعليمية</h1>
+      <p class="header-subtitle">حلقات القرآن الكريم بالمسجد النبوي الشريف</p>
+    </div>
+
+    <div class="header-emblem">
+      <div class="emblem-placeholder">حلقات<br>القرآن الكريم</div>
+    </div>
+  </header>
+
+  <!-- شريط التنقل العلوي -->
+  <div class="app-nav-wrapper">
+    <nav class="app-tabs">
+      <button class="tab-btn active" data-tab="correspondence">
+        <span>📋</span> المراسلات والنماذج
+      </button>
+      <button class="tab-btn" data-tab="employees">
+        <span>👥</span> قاعدة بيانات الموظفين
+      </button>
+      <button class="tab-btn" data-tab="templates">
+        <span>📁</span> إدارة قوالب النماذج
+      </button>
+      <button class="tab-btn" data-tab="dashboard">
+        <span>📊</span> أعمال رئيس الوحدة
+      </button>
+      <button class="tab-btn" data-tab="secretariat">
+        <span>📅</span> الأعمال والتقويم
+      </button>
+      <button class="tab-btn" onclick="openSyncModal()" style="margin-right: auto; color: var(--gold-600);">
+        <span>📊</span> ربط / استيراد Google Sheets
+      </button>
+    </nav>
+  </div>
+
+  <main class="app-main">
+
+    <!-- 1. تبويب المراسلات والنماذج -->
+    <section id="tab-correspondence" class="tab-panel active">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title"><span>📋</span> نظام المراسلات والنماذج المعتمدة والأرشيف</h2>
+            <p class="card-subtitle">إصدار طلبات التعيين، الخطابات الرسمية المعتمدة، وتتبع حالة الأرشيف الصادر</p>
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="choice-card" onclick="showSection('formSelectSection')">
+            <div class="icon">📝</div>
+            <h4>إصدار نموذج إداري معتمد</h4>
+            <p>طلب تعيين مرشح جديد، إنهاء تكليف، تحويل فترة، أو إضافة فترة</p>
+          </div>
+          <div class="choice-card" onclick="showSection('openLetterSection')">
+            <div class="icon">✉️</div>
+            <h4>خطاب حر (محرر مفتوح)</h4>
+            <p>إعداد خطاب رسمي حر برقم صادر وتاريخ موحدين</p>
+          </div>
+          <div class="choice-card" onclick="showSection('archiveSection')">
+            <div class="icon">🗂️</div>
+            <h4>الأرشيف وحالة الإجراءات</h4>
+            <p>استعراض المعاملات الصادرة وتحديث حالتها (قيد التنفيذ / تم / مرفوض)</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- قسم اختيار وتعبئة النماذج -->
+      <div id="formSelectSection" class="card hidden">
+        <div class="card-header">
+          <h3 class="card-title">إصدار نموذج إداري</h3>
+          <button class="btn btn-outline btn-sm" onclick="showSection('mainChoice')">رجوع ↩️</button>
+        </div>
+
+        <label>نوع النموذج المطلوب إصداره *</label>
+        <select id="definedFormTypeSelect" onchange="onFormTypeChange()">
+          <option value="">-- اختر النموذج --</option>
+          <option value="طلب تعيين">طلب تعيين (مرشح جديد)</option>
+          <option value="إنهاء تكليف">إنهاء تكليف موظف</option>
+          <option value="طلب تحويل فترة">طلب تحويل فترة</option>
+          <option value="طلب تحويل فترة مؤقتة">طلب تحويل فترة مؤقتة</option>
+          <option value="طلب إضافة فترة">طلب إضافة فترة</option>
+          <option value="طلب تغيير مسمى">طلب تغيير مسمى</option>
+        </select>
+
+        <!-- نموذج التعيين لمرشح جديد -->
+        <div id="newCandidateSection" class="hidden" style="margin-top:20px;">
+          <h3 style="color:var(--primary-800); margin-bottom:12px;">بيانات المرشح الجديد للتعيين</h3>
+          
+          <div class="field-row">
+            <div class="field-group">
+              <label>اسم المرشح الكامل *</label>
+              <input type="text" id="cand_name" placeholder="أدخل الاسم الثلاثي/الرباعي">
+            </div>
+            <div class="field-group">
+              <label>رقم الهوية (10 خانات) *</label>
+              <input type="text" id="cand_nid" maxlength="10" placeholder="1XXXXXXXXX" oninput="renderCandNidBoxes()">
+            </div>
+          </div>
+
+          <label>تجزئة رقم الهوية (من اليسار إلى اليمين):</label>
+          <div id="cand-id-boxes" class="id-boxes-container"></div>
+
+          <div class="field-row">
+            <div class="field-group">
+              <label>الجنسية</label>
+              <input type="text" id="cand_nation" value="سعودي">
+            </div>
+            <div class="field-group">
+              <label>رقم الجوال</label>
+              <input type="text" id="cand_phone" placeholder="05XXXXXXXX">
+            </div>
+            <div class="field-group">
+              <label>العمر</label>
+              <input type="number" id="cand_age" placeholder="العمر">
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field-group">
+              <label>المسمى الوظيفي المطلوب</label>
+              <input type="text" id="cand_job" placeholder="مثال: معلم قرآن / مشرف">
+            </div>
+            <div class="field-group">
+              <label>الوحدة</label>
+              <input type="text" id="cand_unit" value="حلقات القرآن الكريم">
+            </div>
+            <div class="field-group">
+              <label>الشعبة / القسم</label>
+              <input type="text" id="cand_sec" placeholder="أدخل الشعبة">
+            </div>
+          </div>
+
+          <label>الفترات المطلوبة</label>
+          <div class="checkbox-group">
+            <label class="checkbox-label"><input type="checkbox" class="cand_p" value="الفجر"> الفجر</label>
+            <label class="checkbox-label"><input type="checkbox" class="cand_p" value="الضحى"> الضحى</label>
+            <label class="checkbox-label"><input type="checkbox" class="cand_p" value="الظهر"> الظهر</label>
+            <label class="checkbox-label"><input type="checkbox" class="cand_p" value="العصر"> العصر</label>
+            <label class="checkbox-label"><input type="checkbox" class="cand_p" value="المغرب"> المغرب</label>
+            <label class="checkbox-label"><input type="checkbox" class="cand_p" value="العشاء"> العشاء</label>
+          </div>
+
+          <div class="field-row" style="margin-top:10px;">
+            <div class="field-group">
+              <label>مبررات التعيين 1</label>
+              <input type="text" id="cand_r1" placeholder="مثال: حاجة الحلقة لمدرس">
+            </div>
+            <div class="field-group">
+              <label>مبررات التعيين 2</label>
+              <input type="text" id="cand_r2" placeholder="مبرر إضافي">
+            </div>
+          </div>
+
+          <div style="margin-top:14px;">
+            <label class="checkbox-label" style="color:var(--primary-800);">
+              <input type="checkbox" id="saveCandidateToDbCheck" checked> 💾 حفظ بيانات المرشح تلقائياً في سجل الموظفين عند الاعتماد
+            </label>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="submitCandidateForm()">💾 اعتماد وتوليد النموذج والمعاينة</button>
+            <button class="btn btn-outline" onclick="showSection('mainChoice')">إلغاء</button>
+          </div>
+        </div>
+
+        <!-- النماذج للموظفين المسجلين -->
+        <div id="existingEmpSection" class="hidden" style="margin-top:20px;">
+          <label>اختر الموظف المعني بالطلب *</label>
+          <select id="formEmpSelect" onchange="onEmpSelectForForm()">
+            <option value="">-- اختر الموظف من السجل --</option>
+          </select>
+
+          <div id="formEmpPreview" class="card hidden" style="background:var(--gold-100); margin-top:12px;">
+            <p><strong>الاسم:</strong> <span id="f-name"></span> | <strong>الرقم الوظيفي:</strong> <span id="f-id"></span> | <strong>الهوية:</strong> <span id="f-nid"></span></p>
+            <p><strong>المسمى الحالي:</strong> <span id="f-job"></span> | <strong>الوحدة:</strong> <span id="f-unit"></span> | <strong>القسم:</strong> <span id="f-sec"></span></p>
+            <label style="margin-top:6px;">تجزئة الهوية الرقمية:</label>
+            <div id="f-id-boxes" class="id-boxes-container"></div>
+          </div>
+
+          <div class="field-group" style="margin-top:14px;">
+            <label>ملاحظات / بيان الإجراء المطلوبة</label>
+            <textarea id="formEmpNotes" placeholder="أدخل تفاصيل التكليف أو التحويل المطلوب..."></textarea>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="submitDefinedForm()">💾 اعتماد واستخراج النموذج (PDF/طباعة)</button>
+            <button class="btn btn-outline" onclick="showSection('mainChoice')">إلغاء</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- قسم إنشاء خطاب حر -->
+      <div id="openLetterSection" class="card hidden">
+        <div class="card-header">
+          <h3 class="card-title">إعداد خطاب حر (محرر مفتوح)</h3>
+          <button class="btn btn-outline btn-sm" onclick="showSection('mainChoice')">رجوع ↩️</button>
+        </div>
+
+        <div class="field-group">
+          <label>اختر الموظف (اختياري)</label>
+          <select id="openEmpSelect"><option value="">-- بدون موظف مخصص --</option></select>
+        </div>
+
+        <div class="field-group" style="margin-top:10px;">
+          <label>موضوع الخطاب *</label>
+          <input type="text" id="openLetterSubject" placeholder="أدخل عنوان موضوع الخطاب">
+        </div>
+
+        <div class="field-group" style="margin-top:10px;">
+          <label>نص الخطاب الكامل *</label>
+          <textarea id="openLetterBody" style="min-height:160px;" placeholder="اكتب نص الخطاب والتوجيه المباشر هنا..."></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="submitOpenLetter()">📄 إصدار ومعاينة الخطاب الرسمي</button>
+          <button class="btn btn-outline" onclick="showSection('mainChoice')">إلغاء</button>
+        </div>
+      </div>
+
+      <!-- قسم الأرشيف وحالة الإجراءات -->
+      <div id="archiveSection" class="card">
+        <div class="card-header">
+          <h3 class="card-title">🗂️ الأرشيف الشامل ومتابعة حالة المعاملات</h3>
+        </div>
+        
+        <div class="field-row">
+          <div class="field-group">
+            <label>بحث باسم الموظف أو الموضوع</label>
+            <input type="text" id="archiveFilterName" oninput="renderArchiveTable()" placeholder="🔍 اكتب للبحث بالاسم...">
+          </div>
+          <div class="field-group">
+            <label>بحث برقم الصادر</label>
+            <input type="text" id="archiveFilterNumber" oninput="renderArchiveTable()" placeholder="🔍 مثل: ت / 000001 / 26">
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>رقم الصادر والتاريخ</th>
+                <th>التاريخ</th>
+                <th>النوع</th>
+                <th>الموضوع</th>
+                <th>الموظف/المرشح</th>
+                <th>حالة الإجراء</th>
+                <th>تحديث الحالة</th>
+                <th>معاينة/طباعة</th>
+              </tr>
+            </thead>
+            <tbody id="archiveTableBody">
+              <tr><td colspan="8" style="text-align:center;">جاري تحميل المعاملات...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. تبويب قاعدة بيانات الموظفين -->
+    <section id="tab-employees" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">👥 قاعدة بيانات سجل الموظفين (الموارد البشرية)</h2>
+            <p class="card-subtitle">إضافة، تعديل، وحفظ كافة بيانات الموظفين والمدرسين بالحلقات</p>
+          </div>
+          <div class="btn-row" style="margin-top:0;">
+            <button class="btn btn-gold btn-sm" onclick="exportEmployeesCSV()">📥 تصدير Excel/CSV</button>
+            <button class="btn btn-primary btn-sm" onclick="openEmployeeModal()">➕ إضافة موظف جديد</button>
+          </div>
+        </div>
+
+        <div class="field-row" style="margin-bottom:12px;">
+          <div class="field-group" style="max-width:400px;">
+            <input type="text" id="empSearchInput" oninput="filterEmployeeTable()" placeholder="🔍 بحث باسم الموظف، الرقم الوظيفي، أو رقم الهوية...">
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>الرقم الوظيفي</th>
+                <th>اسم الموظف</th>
+                <th>المسمى الوظيفي</th>
+                <th>رقم الهوية</th>
+                <th>الجوال</th>
+                <th>الفترة</th>
+                <th>التكليف</th>
+                <th>إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="employeesTableBody">
+              <tr><td colspan="8" style="text-align:center;">جاري تحميل سجل الموظفين...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. تبويب إدارة قوالب النماذج -->
+    <section id="tab-templates" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">📁 إدارة قوالب النماذج والمستندات</h2>
+            <p class="card-subtitle">تخزين وحفظ القوالب الرسمية للاستخدام السريع في إصدار المعاملات</p>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openTemplateModal()">➕ إضافة قالب جديد</button>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>اسم النموذج</th>
+                <th>الوصف</th>
+                <th>تاريخ الإضافة</th>
+                <th>الرابط / المعرف</th>
+                <th>إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="templatesTableBody">
+              <tr><td colspan="5" style="text-align:center;">لا توجد قوالب مضافة بعد</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. تبويب أعمال رئيس الوحدة -->
+    <section id="tab-dashboard" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">📊 لوحة تحكم رئيس الوحدة الإحصائية</h2>
+        </div>
+
+        <div class="card-grid">
+          <div class="choice-card" style="background:linear-gradient(135deg, #14532d, #1b6e3c); color:#fff;">
+            <div style="font-size:2rem; font-weight:800;" id="stat-total">0</div>
+            <div>إجمالي المعاملات الصادرة</div>
+          </div>
+          <div class="choice-card" style="background:linear-gradient(135deg, #1b6e3c, #22c55e); color:#fff;">
+            <div style="font-size:2rem; font-weight:800;" id="stat-today">0</div>
+            <div>صادر اليوم</div>
+          </div>
+          <div class="choice-card" style="background:linear-gradient(135deg, #991b1b, #ef4444); color:#fff;">
+            <div style="font-size:2rem; font-weight:800;" id="stat-pending">0</div>
+            <div>مهام قيد التنفيذ</div>
+          </div>
+          <div class="choice-card" style="background:linear-gradient(135deg, #15803d, #16a34a); color:#fff;">
+            <div style="font-size:2rem; font-weight:800;" id="stat-done">0</div>
+            <div>مهام مكتملة</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">⚡ مساحة القرارات والتوجيهات السريعة</h3>
+        </div>
+        <label>إصدار قرار أو توجيه عاجل</label>
+        <textarea id="quickDecisionText" placeholder="اكتب نص القرار أو التوجيه لإرساله فورياً كمهمة عاجلة لمكتب رئيس الوحدة..."></textarea>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveQuickDecision()">⚡ حفظ وإرسال التوجيه فوري</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. تبويب الأعمال والتقويم -->
+    <section id="tab-secretariat" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">📅 تقويم المواعيد والاجتماعات</h2>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label>عنوان الموعد/الاجتماع *</label>
+            <input type="text" id="meetingTitle" placeholder="عنوان الموعد">
+          </div>
+          <div class="field-group">
+            <label>التاريخ</label>
+            <input type="date" id="meetingDate">
+          </div>
+          <div class="field-group">
+            <label>الوقت</label>
+            <input type="time" id="meetingTime">
+          </div>
+          <div class="field-group">
+            <label>المكان</label>
+            <input type="text" id="meetingLocation" placeholder="مقر الاجتماع">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>ملاحظات الموعد</label>
+          <textarea id="meetingNotes" placeholder="ملاحظات تفصيلية..."></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="submitMeeting()">➕ إضافة الموعد إلى التقويم</button>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>العنوان</th><th>التاريخ</th><th>الوقت</th><th>المكان</th><th>ملاحظات</th></tr>
+            </thead>
+            <tbody id="meetingsTableBody">
+              <tr><td colspan="5" style="text-align:center;">لا توجد مواعيد مضافة</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">📌 متابعة المهام وتحديد الأولويات</h2>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label>عنوان المهمة *</label>
+            <input type="text" id="taskTitle" placeholder="تفاصيل المهمة المطلوب انجازها">
+          </div>
+          <div class="field-group">
+            <label>المسند إليه</label>
+            <input type="text" id="taskAssignee" placeholder="اسم الشخص أو الجهة">
+          </div>
+          <div class="field-group">
+            <label>الأولوية</label>
+            <select id="taskPriority">
+              <option value="مهمة غير عاجلة">مهمة غير عاجلة</option>
+              <option value="مهمة عاجلة">مهمة عاجلة 🔥</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>تاريخ الاستحقاق</label>
+            <input type="date" id="taskDue">
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="submitTask()">➕ إضافة المهمة</button>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>المهمة</th>
+                <th>المسند إليه</th>
+                <th>الأولوية</th>
+                <th>تاريخ الاستحقاق</th>
+                <th>الحالة</th>
+                <th>إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="tasksTableBody">
+              <tr><td colspan="6" style="text-align:center;">لا توجد مهام</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal إضافة/تعديل موظف -->
+  <div id="empModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="empModalTitle" class="modal-title">إضافة موظف جديد</h3>
+        <button class="modal-close" onclick="closeEmployeeModal()">&times;</button>
+      </div>
+      <input type="hidden" id="empRowIndex">
+
+      <div class="field-row">
+        <div class="field-group">
+          <label>اسم الموظف الكامل *</label>
+          <input type="text" id="empNameInput" placeholder="الاسم الكامل">
+        </div>
+        <div class="field-group">
+          <label>الرقم الوظيفي *</label>
+          <input type="text" id="empIdInput" placeholder="مثل: 4012">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field-group">
+          <label>رقم الهوية الوطنية (10 خانات) *</label>
+          <input type="text" id="empNationalIdInput" maxlength="10" placeholder="1XXXXXXXXX">
+        </div>
+        <div class="field-group">
+          <label>الجنسية</label>
+          <input type="text" id="empNationalityInput" value="سعودي">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field-group">
+          <label>المسمى الوظيفي</label>
+          <input type="text" id="empJobInput" placeholder="معلم قرآن / مشرف">
+        </div>
+        <div class="field-group">
+          <label>الفترة</label>
+          <input type="text" id="empPeriodInput" placeholder="الفجر / العصر / المغرب">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field-group">
+          <label>الوحدة</label>
+          <input type="text" id="empUnitInput" value="حلقات القرآن الكريم">
+        </div>
+        <div class="field-group">
+          <label>الشعبة / القسم</label>
+          <input type="text" id="empSectionInput" placeholder="اسم الشعبة">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field-group">
+          <label>رقم الجوال</label>
+          <input type="text" id="empPhoneInput" placeholder="05XXXXXXXX">
+        </div>
+        <div class="field-group">
+          <label>العمر</label>
+          <input type="text" id="empAgeInput">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field-group">
+          <label>التكليف الحالي</label>
+          <input type="text" id="empTaskInput">
+        </div>
+        <div class="field-group">
+          <label>ملاحظات</label>
+          <input type="text" id="empNoteInput">
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="submitEmployeeForm()">💾 حفظ البيانات</button>
+        <button class="btn btn-outline" onclick="closeEmployeeModal()">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal إضافة قالب جديد -->
+  <div id="templateModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">إضافة قالب مستند جديد</h3>
+        <button class="modal-close" onclick="closeTemplateModal()">&times;</button>
+      </div>
+
+      <div class="field-group">
+        <label>اسم النموذج *</label>
+        <input type="text" id="tplNameInput" placeholder="مثال: نموذج طلب إجازة / نقل">
+      </div>
+
+      <div class="field-group" style="margin-top:10px;">
+        <label>الوصف المختصر</label>
+        <input type="text" id="tplDescInput" placeholder="وصف استخدام النموذج">
+      </div>
+
+      <div class="field-group" style="margin-top:10px;">
+        <label>رابط القالب أو المستند (Google Docs / Drive)</label>
+        <input type="text" id="tplDocIdInput" placeholder="https://docs.google.com/document/d/.../edit">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="submitNewTemplate()">💾 حفظ وتفعيل القالب</button>
+        <button class="btn btn-outline" onclick="closeTemplateModal()">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal المعاينة والطباعة الرسمية -->
+  <div id="printModal" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width:850px;">
+      <div class="modal-header">
+        <h3 class="modal-title">معاينة الخطاب / المعاملة المعتمدة</h3>
+        <div>
+          <button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
+          <button class="btn btn-outline btn-sm" onclick="closePrintModal()">إغلاق</button>
+        </div>
+      </div>
+
+      <div id="printContent" class="print-paper">
+        <!-- يتم ملء محتوى المعاملة ديناميكياً -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal ربط / استيراد Google Sheets -->
+  <div id="syncModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">📊 ربط واستيراد بيانات Google Sheets</h3>
+        <button class="modal-close" onclick="closeSyncModal()">&times;</button>
+      </div>
+
+      <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:14px;">
+        يمكنك ربط النظام مباشرة برابط نشر جدول Google Sheets (CSV) لقراءة البيانات وتحديثها فورياً أو رفع ملف Excel/CSV.
+      </p>
+
+      <div class="field-group">
+        <label>رابط نشر شيت الموظفين (CSV Public URL)</label>
+        <input type="text" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="syncFromGoogleSheet()">🔄 جلب الموظفين من الرابط</button>
+        <button class="btn btn-gold" onclick="document.getElementById('fileCsvImport').click()">📁 استيراد ملف CSV/Excel محلي</button>
+        <input type="file" id="fileCsvImport" accept=".csv" class="hidden" onchange="importLocalCSV(event)">
+      </div>
+    </div>
+  </div>
+
+  <!-- التنبيه الفوري -->
+  <div id="toast" class="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
