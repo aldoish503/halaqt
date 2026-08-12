@@ -840,19 +840,37 @@ function renderDropdowns() {
 
   const checklist = document.getElementById('multiEmpChecklist');
   if (checklist) {
+    // الاحتفاظ بالمعلمين المحددين سابقاً إن وجدوا
+    const selectedIds = new Set(Array.from(document.querySelectorAll('.multi-emp-cb:checked')).map(cb => cb.value));
+    
     checklist.innerHTML = '';
     if (!APP_DATA.employees.length) {
       checklist.innerHTML = '<p style="font-size:0.85rem; color:#888; text-align:center;">لا يوجد موظفون بالسجل</p>';
     } else {
       APP_DATA.employees.forEach(e => {
+        const isChecked = selectedIds.has(String(e.id)) ? 'checked' : '';
         checklist.innerHTML += `
           <label class="checkbox-label" style="display:block; margin-bottom:6px; font-weight:normal; font-size:0.9rem;">
-            <input type="checkbox" class="multi-emp-cb" value="${e.id}" data-name="${e.name}">
+            <input type="checkbox" class="multi-emp-cb" value="${e.id}" data-name="${e.name}" ${isChecked}>
             <strong>${e.name}</strong> (${e.id}) - <span style="color:#666;">${e.job || 'موظف'}</span>
           </label>`;
       });
     }
   }
+}
+
+function filterMultiEmpChecklist() {
+  const q = (document.getElementById('multiEmpSearchInput')?.value || '').toLowerCase().trim();
+  const labels = document.querySelectorAll('#multiEmpChecklist label');
+  
+  labels.forEach(lbl => {
+    const text = lbl.textContent.toLowerCase();
+    if (!q || text.includes(q)) {
+      lbl.style.display = 'block';
+    } else {
+      lbl.style.display = 'none';
+    }
+  });
 }
 
 function submitMeeting() {

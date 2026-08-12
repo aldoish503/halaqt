@@ -240,14 +240,15 @@
 
           <!-- اختيار عدة موظفين (تكليف جماعي) -->
           <div id="multiEmpContainer" class="hidden" style="border:1px solid var(--gold-300); padding:12px; border-radius:8px; background:#fffcf6;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:10px; flex-wrap:wrap;">
               <strong>تحديد الموظفين المكلفين بالجملة:</strong>
+              <input type="text" id="multiEmpSearchInput" placeholder="🔍 بحث باسم الموظف أو الرقم..." oninput="filterMultiEmpChecklist()" style="padding:6px 10px; font-size:0.85rem; width:220px; border-radius:6px; border:1px solid var(--border-color);">
               <div>
                 <button type="button" class="btn btn-outline btn-sm" onclick="selectAllFormEmployees(true)">تحديد الكل</button>
                 <button type="button" class="btn btn-outline btn-sm" onclick="selectAllFormEmployees(false)">إلغاء الكل</button>
               </div>
             </div>
-            <div id="multiEmpChecklist" style="max-height:180px; overflow-y:auto; border:1px solid var(--border-color); padding:8px; border-radius:6px; background:#fff;">
+            <div id="multiEmpChecklist" style="max-height:220px; overflow-y:auto; border:1px solid var(--border-color); padding:8px; border-radius:6px; background:#fff;">
               <!-- سيتم توليد الموظفين برمجياً -->
             </div>
           </div>
