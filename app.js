@@ -987,6 +987,49 @@ function openPrintModal(item) {
 
   const d = item.details || {};
   const emp = item.empDetails || {};
+  const empName = item.employeeName || d.name || emp.name || '—';
+  const empId = item.employeeId || emp.id || '—';
+  const empNid = emp.nationalId || d.nationalId || '0000000000';
+  const nidStr = String(empNid).padStart(10, '0');
+
+  let nidBoxes = '<div class="id-boxes-container" style="display:inline-flex; gap:2px; vertical-align:middle; margin:0 4px;">';
+  for (let i = 0; i < 10; i++) {
+    nidBoxes += `<div class="id-box" style="width:18px; height:22px; border:1px solid #000; text-align:center; line-height:20px; font-weight:bold; font-size:0.8rem; background:#fff;">${nidStr.charAt(i)}</div>`;
+  }
+  nidBoxes += '</div>';
+
+  // جدول البيانات الأساسية الخاص بكافة النماذج المعتمدة
+  const baseEmpTableHtml = `
+    <div style="margin-bottom:14px;">
+      <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">البيانات الأساسية للموظف / المعلم</h4>
+      <table style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:right;" border="1" cellpadding="5">
+        <tr>
+          <td style="background:#fafafa; width:15%;"><strong>الاســـــــم:</strong></td>
+          <td style="width:35%;"><strong>${empName}</strong></td>
+          <td style="background:#fafafa; width:15%;"><strong>الرقم الوظيفي:</strong></td>
+          <td style="width:35%;"><strong>${empId}</strong></td>
+        </tr>
+        <tr>
+          <td style="background:#fafafa;"><strong>رقم الهوية:</strong></td>
+          <td>${nidBoxes}</td>
+          <td style="background:#fafafa;"><strong>الجنسية:</strong></td>
+          <td>${emp.nationality || d.nationality || 'سعودي'}</td>
+        </tr>
+        <tr>
+          <td style="background:#fafafa;"><strong>الـوحــدة:</strong></td>
+          <td>${emp.unit || d.unit || 'الشؤون التعليمية'}</td>
+          <td style="background:#fafafa;"><strong>المسمى الوظيفي:</strong></td>
+          <td>${emp.job || d.job || 'معلم / موظف'}</td>
+        </tr>
+        <tr>
+          <td style="background:#fafafa;"><strong>الفترات الحالية:</strong></td>
+          <td>${emp.period || d.periods || 'فترة العمل الرسمية'}</td>
+          <td style="background:#fafafa;"><strong>الشعبة / القسم:</strong></td>
+          <td>${emp.section || d.section || 'حلقات القرآن الكريم'}</td>
+        </tr>
+      </table>
+    </div>
+  `;
 
   // فحص التكليف الجماعي (أكثر من موظف)
   if (item.assignedEmployeesList && item.assignedEmployeesList.length > 1) {
@@ -1001,130 +1044,26 @@ function openPrintModal(item) {
     `).join('');
 
     bodyHtml = `
-      <h3 style="text-align:center; margin-bottom:20px; color:var(--primary-900);">قرار / نموذج تكليف جماعي (${item.type})</h3>
-      <p><strong>بيانات الموظفين المعنيين بالتكليف الجماعي (عدد: ${item.assignedEmployeesList.length} موظفاً):</strong></p>
-      <table style="width:100%; border-collapse:collapse; margin-bottom:15px; font-size:0.9rem;" border="1" cellpadding="6">
+      <h3 style="text-align:center; margin-bottom:15px; color:var(--primary-900); text-decoration:underline;">( قرار / نموذج تكليف جماعي - ${item.type} )</h3>
+      <p style="font-size:0.9rem;"><strong>بيانات الموظفين المعنيين بالتكليف الجماعي (عدد: ${item.assignedEmployeesList.length} موظفاً):</strong></p>
+      <table style="width:100%; border-collapse:collapse; margin-bottom:15px; font-size:0.85rem;" border="1" cellpadding="6">
         <tr style="background:#f4f4f4;">
-          <th style="width:40px;">م</th>
+          <th style="width:35px;">م</th>
           <th>اسم الموظف / المعلم</th>
           <th>الرقم الوظيفي</th>
           <th>المسمى الوظيفي</th>
-          <th>الفترة / التفاصيل</th>
+          <th>الفترة / القسم</th>
         </tr>
         ${empRowsHtml}
       </table>
-      <p><strong>تاريخ بداية الإجراء/التكليف:</strong> ${item.startDate || item.date} ${item.endDate ? ' | <strong>تاريخ النهاية:</strong> ' + item.endDate : ''}</p>
-      <p><strong>المهام والتوجيهات:</strong> ${item.bodyText || 'إكمال كافة الالتزامات والمهام المسندة لحاجة العمل.'}</p>
-      <div style="margin-top:20px; padding:12px; border:1px dashed var(--gold-600); background:#fffdfa;">
-        <p><strong>توجيه رئيس وحدة الشؤون المالية والإدارية:</strong> [ ☑ موافق ] [ ☐ غير موافق ]</p>
-        <p><strong>اعتماد تنفيذ التكليف الجماعي:</strong> تم الاعتماد والتنفيذ بموجب الاعتماد المالي والإداري.</p>
+      <p style="font-size:0.9rem;"><strong>تاريخ بداية الإجراء/التكليف:</strong> ${item.startDate || item.date} ${item.endDate ? ' | <strong>تاريخ النهاية:</strong> ' + item.endDate : ''}</p>
+      <p style="font-size:0.9rem;"><strong>المهام والتوجيهات:</strong> ${item.bodyText || 'إكمال كافة الالتزامات والمهام المسندة لحاجة العمل.'}</p>
+      <div style="margin-top:15px; padding:10px; border:1px dashed #000; background:#fffdfa; font-size:0.85rem;">
+        <p style="margin:0 0 4px 0;"><strong>توجيه رئيس وحدة الشؤون المالية والإدارية:</strong> [ ☑ موافق ] [ ☐ غير موافق ]</p>
+        <p style="margin:0;"><strong>اعتماد تنفيذ التكليف الجماعي:</strong> تم الاعتماد والتنفيذ بموجب الاعتماد المالي والإداري.</p>
       </div>
     `;
-  } else if (item.type === 'طلب تعيين' && d.name) {
-    const nid = String(d.nationalId || '').padStart(10, '0');
-    let boxesHtml = '<div class="id-boxes-container" style="justify-content:center; margin:16px 0;">';
-    for (let i = 0; i < 10; i++) boxesHtml += `<div class="id-box">${nid.charAt(i)}</div>`;
-    boxesHtml += '</div>';
-
-    bodyHtml = `
-      <h3 style="text-align:center; margin-bottom:20px; color:var(--primary-900);">طلب تعيين جديد بالحلقات</h3>
-      <p><strong>اسم المرشح:</strong> ${d.name}</p>
-      <p><strong>رقم الهوية:</strong> ${d.nationalId} | <strong>الجنسية:</strong> ${d.nationality} | <strong>العمر:</strong> ${d.age}</p>
-      ${boxesHtml}
-      <p><strong>المسمى الوظيفي المطلوب:</strong> ${d.job} | <strong>الوحدة:</strong> ${d.unit} | <strong>القسم:</strong> ${d.section}</p>
-      <p><strong>الفترات المطلوبة:</strong> ${d.periods || 'غير محدد'}</p>
-      <p><strong>مبررات التعيين:</strong> ${d.r1 || ''} - ${d.r2 || ''}</p>
-    `;
-  } else if (item.type === 'إنهاء تكليف') {
-    bodyHtml = `
-      <h3 style="text-align:center; margin-bottom:20px; color:var(--primary-900);">قرار / نموذج إنهاء تكليف</h3>
-      <table style="width:100%; border-collapse:collapse; margin-bottom:15px; font-size:0.95rem;" border="1" cellpadding="6">
-        <tr style="background:#f4f4f4;">
-          <th>الاسم</th>
-          <th>الرقم الوظيفي</th>
-          <th>مسمى التكليف</th>
-          <th>فترات التكليف</th>
-          <th>تاريخ بداية ونهاية التكليف</th>
-        </tr>
-        <tr>
-          <td>${item.employeeName}</td>
-          <td>${item.employeeId}</td>
-          <td>${emp.job || item.extraType || 'مكلف'}</td>
-          <td>${emp.period || 'فترة التكليف الرسمية'}</td>
-          <td>من ${item.startDate || '—'} إلى ${item.endDate || 'الآن'}</td>
-        </tr>
-      </table>
-      <p><strong>المهام والتوجيه خلال التكليف:</strong> ${item.bodyText || 'إكمال كافة الالتزامات والمهام المسندة.'}</p>
-      <div style="margin-top:15px; padding:10px; border:1px dashed #ccc; background:#fafafa;">
-        <p><strong>توجيه رئيس وحدة الشؤون المالية والإدارية:</strong> [ ☑ موافق ] [ ☐ غير موافق ]</p>
-        <p><strong>اعتماد تنفيذ طلب التكليف:</strong> تم التنفيذ بموجب الاعتماد المالي والإداري.</p>
-      </div>
-    `;
-  } else if (item.type === 'إشعار مباشرة عمل') {
-    const nid = String(emp.nationalId || '').padStart(10, '0');
-    let boxesHtml = '<div class="id-boxes-container" style="justify-content:center; margin:12px 0;">';
-    for (let i = 0; i < 10; i++) boxesHtml += `<div class="id-box">${nid.charAt(i)}</div>`;
-    boxesHtml += '</div>';
-
-    bodyHtml = `
-      <h3 style="text-align:center; margin-bottom:20px; color:var(--primary-900);">إشعار مباشرة عمل (عودة من إجازة / قطع إجازة)</h3>
-      <p><strong>فضيلة رئيس وحدة الشؤون المالية والإدارية سلمه الله</strong></p>
-      <p>السلام عليكم ورحمة الله وبركاته، وبعد:</p>
-      <p>نأمل منكم اعتماد مباشرة المذكور أدناه من تاريخ قطعه لإجازته ومباشرته وإكمال اللازم:</p>
-      <p><strong>الاسم:</strong> ${item.employeeName} | <strong>الرقم الوظيفي:</strong> ${item.employeeId}</p>
-      ${boxesHtml}
-      <p><strong>الوحدة:</strong> الشؤون التعليمية | <strong>المسمى الوظيفي:</strong> ${emp.job || 'معلم/موظف'}</p>
-      <p><strong>نوع الإجازة:</strong> ${item.extraType || 'سنوية / مرخص بها'} | <strong>تاريخ المباشرة الفعلي:</strong> ${item.startDate || item.date}</p>
-      <p style="margin-top:15px;"><strong>ملاحظات الإدارة:</strong> ${item.bodyText || 'تمت المباشرة وإكمال الإجراءات النظامية.'}</p>
-    `;
-  } else if (item.type === 'طلب / منح إجازة') {
-    bodyHtml = `
-      <h3 style="text-align:center; margin-bottom:20px; color:var(--primary-900);">طلب / منح إجازة إدارية</h3>
-      <p><strong>فضيلة رئيس وحدة الموارد البشرية والمالية سلمه الله</strong></p>
-      <p>السلام عليكم ورحمة الله وبركاته، وبعد:</p>
-      <p>فنسأل الله لكم دوام التوفيق والسداد، نأمل منكم منح إجازة (<strong>${item.extraType || 'اعتيادية'}</strong>) للمذكور أدناه:</p>
-      <table style="width:100%; border-collapse:collapse; margin:15px 0;" border="1" cellpadding="6">
-        <tr style="background:#f4f4f4;"><th>الاسم</th><th>الرقم الوظيفي</th><th>الفترة المحددة</th></tr>
-        <tr><td>${item.employeeName}</td><td>${item.employeeId}</td><td>من ${item.startDate || '—'} إلى ${item.endDate || '—'}</td></tr>
-      </table>
-      <p><strong>البيان والسبب:</strong> ${item.bodyText || 'حسب الأنظمة واللوائح المعتمدة.'}</p>
-    `;
-  } else if (item.type === 'استثناء دوام') {
-    bodyHtml = `
-      <h3 style="text-align:center; margin-bottom:20px; color:var(--primary-900);">طلب / قرار استثناء دوام وتعديل فترة</h3>
-      <p><strong>سعادة رئيس وحدة الشؤون المالية والإدارية حفظه الله</strong></p>
-      <p>السلام عليكم ورحمة الله وبركاته، وبعد:</p>
-      <p>نفيدكم بأن الموظف/المعلم المذكور أدناه يطلب اعتماد استثناء الدوام وتعديل الفترة وفق البيانات التالية:</p>
-      <p><strong>اسم الموظف:</strong> ${item.employeeName} | <strong>الرقم الوظيفي:</strong> ${item.employeeId}</p>
-      <p><strong>فترة الاستثناء:</strong> من ${item.startDate || '—'} إلى ${item.endDate || '—'}</p>
-      <p><strong>مبررات التفريغ / الاستثناء:</strong> ${item.bodyText || 'لحاجة العمل الميداني والتعليمي.'}</p>
-    `;
-  } else if (item.type === 'إسقاط عهدة') {
-    bodyHtml = `
-      <h3 style="text-align:center; margin-bottom:20px; color:var(--primary-900);">نموذج إسقاط عهدة أو نقل للمستودع</h3>
-      <p><strong>المكرم رئيس وحدة الموارد البشرية والمالية سلمه الله</strong></p>
-      <p>نفيدكم بأن لدينا عدة أصناف تم الاستغناء عنها / غير صالحة للاستخدام وهي كالآتي:</p>
-      <table style="width:100%; border-collapse:collapse; margin:15px 0;" border="1" cellpadding="6">
-        <tr style="background:#f4f4f4;"><th>م</th><th>نوع الصنف والبيان</th><th>المقدم / العهدة</th><th>الحالة الإدارية</th></tr>
-        <tr><td>1</td><td>${item.extraType || 'أجهزة ومعدات مكتبية'}</td><td>${item.employeeName} (${item.employeeId})</td><td>غير صالح للاستخدام / نقل للمستودع</td></tr>
-      </table>
-      <p><strong>ملاحظات الطلب:</strong> ${item.bodyText || 'إسقاط عهدة ونقل للمستودع.'}</p>
-      <div style="margin-top:20px; display:flex; justify-content:space-between; text-align:center; font-size:0.85rem;">
-        <div><strong>اعتماد اللجنة</strong><br><br>...................</div>
-        <div><strong>مسؤول المستودع</strong><br><br>...................</div>
-        <div><strong>رئيس وحدة الموارد البشرية</strong><br>منير بن معلا العمري</div>
-      </div>
-    `;
-  } else if (item.type === 'منح صلاحيات') {
-    bodyHtml = `
-      <h3 style="text-align:center; margin-bottom:20px; color:var(--primary-900);">طلب منح وإضافة صلاحيات إلكترونية (نظام وقار)</h3>
-      <p><strong>سعادة مسؤول شعبة التقنية سلمه الله</strong></p>
-      <p>السلام عليكم ورحمة الله وبركاته، وبعد:</p>
-      <p>فنسأل الله لكم دوام التوفيق والسداد، نفيدكم بطلب منح صلاحية (<strong>${item.extraType || 'إضافة الحلقات والدرجات'}</strong>) في نظام وقار للمذكور أدناه لحاجة العمل:</p>
-      <p><strong>اسم الموظف:</strong> ${item.employeeName} | <strong>الرقم الوظيفي:</strong> ${item.employeeId}</p>
-      <p><strong>تفاصيل ومبررات الطلب:</strong> ${item.bodyText || 'منح الصلاحيات اللازمة لمتابعة الحلقات.'}</p>
-    `;
-  } else {
+  } else if (item.type === 'خطاب رسمي') {
     bodyHtml = `
       <p style="font-weight:bold; font-size:1.1rem; margin-bottom:12px;">${item.addressee || 'فضيلة رئيس وحدة الشؤون المالية والإدارية سلمه الله'}</p>
       <p style="margin-bottom:14px;">السلام عليكم ورحمة الله وبركاته، وبعد:</p>
@@ -1135,6 +1074,42 @@ function openPrintModal(item) {
       </div>
 
       <p style="text-align:center; font-weight:bold; margin-top:25px;">والله يحفظكم ويرعاكم،، والسلام عليكم ورحمة الله وبركاته</p>
+    `;
+  } else {
+    // كافة النماذج الـ 30 الفردية (تطبّق جدول البيانات الأساسية + جدول الإجراء + الخطاب والتوجيه المالي)
+    let actionTableHtml = `
+      <div style="margin-bottom:14px;">
+        <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات الإجراء والطلب التفصيلية</h4>
+        <table style="width:100%; border-collapse:collapse; font-size:0.85rem;" border="1" cellpadding="5">
+          <tr>
+            <td style="background:#fafafa; width:20%;"><strong>نوع الطلب / البيان:</strong></td>
+            <td><strong>${item.extraType || item.subject || item.type}</strong></td>
+            <td style="background:#fafafa; width:20%;"><strong>فترة الإجراء والتواريخ:</strong></td>
+            <td>من ${item.startDate || item.date} إلى ${item.endDate || 'مستمر'}</td>
+          </tr>
+          <tr>
+            <td style="background:#fafafa;"><strong>مبررات الإجراء / الملاحظات:</strong></td>
+            <td colspan="3">${item.bodyText || 'حسب الأنظمة واللوائح والتعليمات المعتمدة بوحدة الشؤون التعليمية.'}</td>
+          </tr>
+        </table>
+      </div>
+    `;
+
+    bodyHtml = `
+      <h3 style="text-align:center; margin-bottom:15px; color:var(--primary-900); text-decoration:underline;">( ${item.type || 'نموذج إداري'} )</h3>
+      ${baseEmpTableHtml}
+      ${actionTableHtml}
+      
+      <div style="margin-top:15px; font-size:0.9rem; line-height:1.7;">
+        <p style="font-weight:bold; margin-bottom:4px;">فضيلة رئيس وحدة الشؤون المالية والإدارية سلمه الله</p>
+        <p style="margin-bottom:4px;">السلام عليكم ورحمة الله وبركاته، وبعد:</p>
+        <p style="margin-bottom:8px;">نظرًا لحاجة العمل، نأمل اعتماد قرار المذكور أعلاه وإكمال اللازم.</p>
+      </div>
+
+      <div style="margin-top:15px; padding:8px 12px; border:1px dashed #000; background:#fafafa; font-size:0.85rem;">
+        <p style="margin:0 0 4px 0;"><strong>توجيه رئيس وحدة الشؤون المالية والإدارية:</strong> [ ☑ موافق ] [ ☐ غير موافق ]</p>
+        <p style="margin:0;"><strong>التوقيع:</strong> ..................................... | <strong>التاريخ:</strong> &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp; / 2026م</p>
+      </div>
     `;
   }
 
