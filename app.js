@@ -1255,16 +1255,12 @@ function openPrintModal(item) {
   }
 
   container.innerHTML = `
-    <div class="print-header">
-      <div style="font-size:0.85rem;">
-        المملكة العربية السعودية<br>
-        رئاسة الشؤون الدينية بالمسجد الحرام والمسجد النبوي<br>
-        وحدة الشؤون التعليمية
-      </div>
-      <div class="print-title-box">
-        <h2>نظام المراسلات والمعاملات الرسمية</h2>
-      </div>
-      <div class="print-meta">
+    <div class="print-header" style="position:relative; border-bottom:2px solid #000; padding-bottom:8px; margin-bottom:15px; text-align:center;">
+      <!-- الكليشة الرسمية المستخرجة من ملفات الوورد الأصلية -->
+      <img src="assets/official_header.jpg" alt="الكليشة الرسمية - رئاسة الشؤون الدينية" style="width:100%; max-height:130px; object-fit:contain; display:block; margin:0 auto;">
+      
+      <!-- مربع الصادر والتاريخ والتفاصيل في أعلى اليسار -->
+      <div class="print-meta" style="position:absolute; top:2px; left:2px; border:1px solid #000; padding:4px 8px; background:#ffffff; color:#000000; font-size:0.8rem; text-align:right; min-width:155px;">
         <strong>رقم الصادر:</strong> ${item.outgoingNumber}<br>
         <strong>التاريخ:</strong> ${item.date}<br>
         <strong>المرفقات:</strong> بدون
@@ -1275,11 +1271,14 @@ function openPrintModal(item) {
       ${bodyHtml}
     </div>
 
-    <div class="print-footer">
-      <div>ختم الجهة الرسمية</div>
+    <div class="print-footer" style="margin-top:25px; display:flex; justify-content:space-between; align-items:flex-end; font-size:0.88rem; color:#000000;">
+      <div style="text-align:center;">
+        <strong>ختم الجهة الرسمية المعتمد</strong><br>
+        <img src="assets/official_stamp.jpg" alt="الختم المعتمد" style="max-height:80px; object-fit:contain; margin-top:4px; opacity:0.85;" onerror="this.style.display='none';">
+      </div>
       <div style="text-align:center;">
         <strong>رئيس وحدة الشؤون التعليمية</strong><br><br>
-        يزيد بن عبد الرحمن الدويش
+        <strong>يزيد بن عبد الرحمن الدويش</strong>
       </div>
     </div>
   `;
