@@ -11,8 +11,14 @@ const STORAGE_KEYS = {
   TASKS: 'AGY_UNIT_TASKS',
   MEETINGS: 'AGY_UNIT_MEETINGS',
   ARCHIVE: 'AGY_UNIT_ARCHIVE',
-  COUNTERS: 'AGY_UNIT_COUNTERS'
+  COUNTERS: 'AGY_UNIT_COUNTERS',
+  GOOGLE_SHEET_URL: 'AGY_UNIT_SHEET_URL'
 };
+
+// ------------------------------------------------------------------
+// إعدادات الشيت الخاص بالمستند المعين
+// ------------------------------------------------------------------
+const DEFAULT_GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1WL7CWYfAFcYcyHVNXOSCYhpBUI_QfeY_fLIcMgJUfkc/gviz/tq?tqx=out:csv&gid=1526450297';
 
 // ------------------------------------------------------------------
 // البيانات الأولية للتجربة السريعة (Initial Demo Data Seeding)
@@ -67,7 +73,8 @@ let APP_DATA = {
   tasks: getStorage(STORAGE_KEYS.TASKS, DEFAULT_TASKS),
   meetings: getStorage(STORAGE_KEYS.MEETINGS, DEFAULT_MEETINGS),
   archive: getStorage(STORAGE_KEYS.ARCHIVE, DEFAULT_ARCHIVE),
-  counter: getStorage(STORAGE_KEYS.COUNTERS, { year: 2026, lastNumber: 1 })
+  counter: getStorage(STORAGE_KEYS.COUNTERS, { year: 2026, lastNumber: 1 }),
+  sheetUrl: localStorage.getItem(STORAGE_KEYS.GOOGLE_SHEET_URL) || DEFAULT_GOOGLE_SHEET_URL
 };
 
 function saveData() {
@@ -77,6 +84,7 @@ function saveData() {
   setStorage(STORAGE_KEYS.MEETINGS, APP_DATA.meetings);
   setStorage(STORAGE_KEYS.ARCHIVE, APP_DATA.archive);
   setStorage(STORAGE_KEYS.COUNTERS, APP_DATA.counter);
+  localStorage.setItem(STORAGE_KEYS.GOOGLE_SHEET_URL, APP_DATA.sheetUrl);
   renderAllViews();
 }
 
@@ -118,7 +126,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  const urlInput = document.getElementById('sheetUrlInput');
+  if (urlInput) urlInput.value = APP_DATA.sheetUrl;
+
   renderAllViews();
+
+  // المزامنة التلقائية الهادئة خلف الكواليس إذا كان الشيت متاحاً للعامة
+  if (APP_DATA.sheetUrl) {
+    autoSyncFromGoogleSheetQuietly(APP_DATA.sheetUrl);
+  }
 });
 
 function renderAllViews() {
@@ -209,7 +225,6 @@ function submitCandidateForm() {
     r2: document.getElementById('cand_r2').value
   };
 
-  // حفظ تلقائي للمرشح في سجل الموظفين إن تطلب الأمر
   if (document.getElementById('saveCandidateToDbCheck').checked) {
     APP_DATA.employees.push({
       id: 'م-' + outgoing.rawNumber.slice(-4),
@@ -227,7 +242,6 @@ function submitCandidateForm() {
     });
   }
 
-  // إضافة إلى الأرشيف
   const archiveItem = {
     outgoingNumber: outgoing.fullHeader,
     date: todayStr,
@@ -767,19 +781,63 @@ function closeSyncModal() {
   document.getElementById('syncModal').classList.add('hidden');
 }
 
-function syncFromGoogleSheet() {
-  const url = document.getElementById('sheetUrlInput').value.trim();
-  if (!url) return showToast('أدخل رابط نشر الشيت CSV', true);
+function formatGoogleSheetUrl(rawUrl) {
+  if (!rawUrl) return '';
+  let url = rawUrl.trim();
+  
+  if (url.includes('/spreadsheets/d/')) {
+    const sheetIdMatch = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    const gidMatch = url.match(/[?&]gid=([0-9]+)/);
+    if (sheetIdMatch && sheetIdMatch[1]) {
+      const sheetId = sheetIdMatch[1];
+      const gid = gidMatch ? gidMatch[1] : '0';
+      return `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${gid}`;
+    }
+  }
+  return url;
+}
 
-  showToast('جاري قراءة بيانات Google Sheet...');
-  fetch(url)
-    .then(res => res.text())
+function autoSyncFromGoogleSheetQuietly(rawUrl) {
+  const csvUrl = formatGoogleSheetUrl(rawUrl);
+  if (!csvUrl) return;
+
+  fetch(csvUrl)
+    .then(res => {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.text();
+    })
     .then(text => {
+      if (text && !text.includes('<!DOCTYPE html>')) {
+        parseCSVAndImport(text, true);
+      }
+    })
+    .catch(() => {});
+}
+
+function syncFromGoogleSheet() {
+  const inputVal = document.getElementById('sheetUrlInput').value.trim();
+  if (!inputVal) return showToast('أدخل رابط شيت جوجل', true);
+
+  const csvUrl = formatGoogleSheetUrl(inputVal);
+  APP_DATA.sheetUrl = inputVal;
+  saveData();
+
+  showToast('جاري قراءة وتوليد البيانات من Google Sheet...');
+  fetch(csvUrl)
+    .then(res => {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.text();
+    })
+    .then(text => {
+      if (text.includes('<!DOCTYPE html>') || text.includes('Sign in')) {
+        showToast('يرجى تغيير مشاركة الشيت في جوجل إلى "أي شخص لديه الرابط يمكنه العرض"', true);
+        return;
+      }
       parseCSVAndImport(text);
       closeSyncModal();
     })
     .catch(err => {
-      showToast('تعذر الجلب. تأكد من نشر الشيت كـ CSV Public', true);
+      showToast('تعذر الجلب. التأكد من مشاركة الشيت للعامة ("أي شخص لديه الرابط")', true);
     });
 }
 
@@ -795,34 +853,56 @@ function importLocalCSV(event) {
   reader.readAsText(file);
 }
 
-function parseCSVAndImport(csvText) {
+function parseCSVAndImport(csvText, isQuiet = false) {
   const lines = csvText.split('\n').filter(l => l.trim() !== '');
-  if (lines.length < 2) return showToast('الملف لا يحتوي بيانات كافية', true);
+  if (lines.length < 2) {
+    if (!isQuiet) showToast('الملف لا يحتوي بيانات كافية', true);
+    return;
+  }
+
+  const headers = lines[0].split(',').map(c => c.replace(/^"|"$/g, '').trim().toLowerCase());
+  
+  const findIndex = (...possibleNames) => {
+    for (let p of possibleNames) {
+      const idx = headers.findIndex(h => h.includes(p));
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  };
+
+  const nameIdx = findIndex('اسم', 'الاسم', 'الموظف', 'name');
+  const idIdx = findIndex('الرقم الوظيفي', 'الرقم_الوظيفي', 'id');
+  const nidIdx = findIndex('هوية', 'الهوية', 'national');
+  const jobIdx = findIndex('مسمى', 'المسمى', 'الوظيفة', 'job');
+  const periodIdx = findIndex('فترة', 'الفترة', 'period');
+  const unitIdx = findIndex('وحدة', 'الوحدة', 'unit');
+  const sectionIdx = findIndex('شعبة', 'قسم', 'القسم', 'section');
+  const phoneIdx = findIndex('جوال', 'الجوال', 'هاتف', 'phone');
 
   const importedEmps = [];
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g, '').trim());
-    if (cols[0] || cols[1]) {
-      importedEmps.push({
-        id: cols[0] || String(i),
-        name: cols[1] || 'بدون اسم',
-        nationalId: cols[2] || '',
-        nationality: cols[3] || 'سعودي',
-        job: cols[4] || '',
-        period: cols[5] || '',
-        unit: cols[6] || 'حلقات القرآن الكريم',
-        section: cols[7] || '',
-        phone: cols[8] || '',
-        age: cols[9] || '',
-        task: cols[10] || '',
-        note: cols[11] || ''
-      });
-    }
+    if (cols.join('').trim() === '') continue;
+
+    importedEmps.push({
+      id: (idIdx !== -1 && cols[idIdx]) ? cols[idIdx] : String(i),
+      name: (nameIdx !== -1 && cols[nameIdx]) ? cols[nameIdx] : (cols[1] || cols[0] || 'بدون اسم'),
+      nationalId: (nidIdx !== -1 && cols[nidIdx]) ? cols[nidIdx] : (cols[2] || ''),
+      nationality: cols[3] || 'سعودي',
+      job: (jobIdx !== -1 && cols[jobIdx]) ? cols[jobIdx] : (cols[4] || ''),
+      period: (periodIdx !== -1 && cols[periodIdx]) ? cols[periodIdx] : (cols[5] || ''),
+      unit: (unitIdx !== -1 && cols[unitIdx]) ? cols[unitIdx] : (cols[6] || 'حلقات القرآن الكريم'),
+      section: (sectionIdx !== -1 && cols[sectionIdx]) ? cols[sectionIdx] : (cols[7] || ''),
+      phone: (phoneIdx !== -1 && cols[phoneIdx]) ? cols[phoneIdx] : (cols[8] || ''),
+      age: cols[9] || '',
+      task: cols[10] || '',
+      note: cols[11] || ''
+    });
   }
 
   if (importedEmps.length) {
     APP_DATA.employees = importedEmps;
     saveData();
-    showToast(`تم استيراد ${importedEmps.length} موظف بنجاح إلى النظام`);
+    if (!isQuiet) showToast(`تم جلب وتطبيق ${importedEmps.length} موظف من Google Sheet بنجاح`);
   }
 }
