@@ -873,7 +873,7 @@ function loadGoogleSheetViaJSONP(sheetUrl, isQuiet = false) {
 }
 
 function autoSyncFromGoogleSheetQuietly(rawUrl) {
-  loadGoogleSheetViaJSONP(rawUrl, true);
+  loadGoogleSheetViaJSONP(rawUrl, false);
 }
 
 function syncFromGoogleSheet() {
