@@ -994,37 +994,37 @@ function openPrintModal(item) {
 
   let nidBoxes = '<div class="id-boxes-container" style="display:inline-flex; gap:2px; vertical-align:middle; margin:0 4px;">';
   for (let i = 0; i < 10; i++) {
-    nidBoxes += `<div class="id-box" style="width:18px; height:22px; border:1px solid #000; text-align:center; line-height:20px; font-weight:bold; font-size:0.8rem; background:#fff;">${nidStr.charAt(i)}</div>`;
+    nidBoxes += `<div class="id-box" style="width:18px; height:22px; border:1px solid #000; text-align:center; line-height:20px; font-weight:bold; font-size:0.8rem; background:#ffffff; color:#000000;">${nidStr.charAt(i)}</div>`;
   }
   nidBoxes += '</div>';
 
-  // جدول البيانات الأساسية الخاص بكافة النماذج المعتمدة
+  // جدول البيانات الأساسية الخاص بكافة النماذج المعتمدة (خلفية بيضاء وحدود سوداء رسمية)
   const baseEmpTableHtml = `
     <div style="margin-bottom:14px;">
-      <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">البيانات الأساسية للموظف / المعلم</h4>
-      <table style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:right;" border="1" cellpadding="5">
+      <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">البيانات الأساسية للموظف / المعلم</h4>
+      <table style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:right; background:#ffffff; color:#000000;" border="1" cellpadding="5">
         <tr>
-          <td style="background:#fafafa; width:15%;"><strong>الاســـــــم:</strong></td>
+          <td style="width:15%;"><strong>الاســـــــم:</strong></td>
           <td style="width:35%;"><strong>${empName}</strong></td>
-          <td style="background:#fafafa; width:15%;"><strong>الرقم الوظيفي:</strong></td>
+          <td style="width:15%;"><strong>الرقم الوظيفي:</strong></td>
           <td style="width:35%;"><strong>${empId}</strong></td>
         </tr>
         <tr>
-          <td style="background:#fafafa;"><strong>رقم الهوية:</strong></td>
+          <td><strong>رقم الهوية:</strong></td>
           <td>${nidBoxes}</td>
-          <td style="background:#fafafa;"><strong>الجنسية:</strong></td>
+          <td><strong>الجنسية:</strong></td>
           <td>${emp.nationality || d.nationality || 'سعودي'}</td>
         </tr>
         <tr>
-          <td style="background:#fafafa;"><strong>الـوحــدة:</strong></td>
+          <td><strong>الـوحــدة:</strong></td>
           <td>${emp.unit || d.unit || 'الشؤون التعليمية'}</td>
-          <td style="background:#fafafa;"><strong>المسمى الوظيفي:</strong></td>
+          <td><strong>المسمى الوظيفي:</strong></td>
           <td>${emp.job || d.job || 'معلم / موظف'}</td>
         </tr>
         <tr>
-          <td style="background:#fafafa;"><strong>الفترات الحالية:</strong></td>
+          <td><strong>الفترات الحالية:</strong></td>
           <td>${emp.period || d.periods || 'فترة العمل الرسمية'}</td>
-          <td style="background:#fafafa;"><strong>الشعبة / القسم:</strong></td>
+          <td><strong>الشعبة / القسم:</strong></td>
           <td>${emp.section || d.section || 'حلقات القرآن الكريم'}</td>
         </tr>
       </table>
@@ -1044,10 +1044,10 @@ function openPrintModal(item) {
     `).join('');
 
     bodyHtml = `
-      <h3 style="text-align:center; margin-bottom:15px; color:var(--primary-900); text-decoration:underline;">( قرار / نموذج تكليف جماعي - ${item.type} )</h3>
+      <h3 style="text-align:center; margin-bottom:15px; color:#000000; text-decoration:underline;">( قرار / نموذج تكليف جماعي - ${item.type} )</h3>
       <p style="font-size:0.9rem;"><strong>بيانات الموظفين المعنيين بالتكليف الجماعي (عدد: ${item.assignedEmployeesList.length} موظفاً):</strong></p>
-      <table style="width:100%; border-collapse:collapse; margin-bottom:15px; font-size:0.85rem;" border="1" cellpadding="6">
-        <tr style="background:#f4f4f4;">
+      <table style="width:100%; border-collapse:collapse; margin-bottom:15px; font-size:0.85rem; background:#ffffff; color:#000000;" border="1" cellpadding="6">
+        <tr>
           <th style="width:35px;">م</th>
           <th>اسم الموظف / المعلم</th>
           <th>الرقم الوظيفي</th>
@@ -1058,7 +1058,7 @@ function openPrintModal(item) {
       </table>
       <p style="font-size:0.9rem;"><strong>تاريخ بداية الإجراء/التكليف:</strong> ${item.startDate || item.date} ${item.endDate ? ' | <strong>تاريخ النهاية:</strong> ' + item.endDate : ''}</p>
       <p style="font-size:0.9rem;"><strong>المهام والتوجيهات:</strong> ${item.bodyText || 'إكمال كافة الالتزامات والمهام المسندة لحاجة العمل.'}</p>
-      <div style="margin-top:15px; padding:10px; border:1px dashed #000; background:#fffdfa; font-size:0.85rem;">
+      <div style="margin-top:15px; padding:10px; border:1px solid #000000; background:#ffffff; font-size:0.85rem;">
         <p style="margin:0 0 4px 0;"><strong>توجيه رئيس وحدة الشؤون المالية والإدارية:</strong> [ ☑ موافق ] [ ☐ غير موافق ]</p>
         <p style="margin:0;"><strong>اعتماد تنفيذ التكليف الجماعي:</strong> تم الاعتماد والتنفيذ بموجب الاعتماد المالي والإداري.</p>
       </div>
@@ -1069,30 +1069,30 @@ function openPrintModal(item) {
       <p style="margin-bottom:14px;">السلام عليكم ورحمة الله وبركاته، وبعد:</p>
       <p style="margin-bottom:16px;">فنسأل الله لكم دوام التوفيق والسداد، ${item.subject ? 'نفيدكم بشأن <strong>(' + item.subject + ')</strong>' : ''}</p>
       
-      <div style="margin:20px 0; font-size:1.05rem; min-height:140px; background:#fff; padding:12px 0; line-height:1.9;">
+      <div style="margin:20px 0; font-size:1.05rem; min-height:140px; background:#ffffff; color:#000000; padding:12px 0; line-height:1.9;">
         ${item.bodyText || 'نأمل من فضيلتكم التكرم بالإحاطة والعلم والتوجيه بما يلزم، شاكرين ومقدرين جهودكم.'}
       </div>
 
       <p style="text-align:center; font-weight:bold; margin-top:25px;">والله يحفظكم ويرعاكم،، والسلام عليكم ورحمة الله وبركاته</p>
     `;
   } else {
-    // بناء جدول الجانب التفصيلي المخصص الفريد لكل نموذج لمنع تداخل المحتويات
+    // بناء جدول الجانب التفصيلي المخصص الفريد لكل نموذج لمنع تداخل المحتويات (خلفيات بيضاء 100%)
     let actionTableHtml = '';
     const typeStr = item.type || '';
 
     if (typeStr === '1. طلب تعيين (مرشح جديد)' || typeStr === 'طلب تعيين') {
       actionTableHtml = `
         <div style="margin-bottom:14px;">
-          <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات المرشح الجديد بالحلقات</h4>
-          <table style="width:100%; border-collapse:collapse; font-size:0.85rem;" border="1" cellpadding="5">
+          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات المرشح الجديد بالحلقات</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem; background:#ffffff; color:#000000;" border="1" cellpadding="5">
             <tr>
-              <td style="background:#fafafa; width:22%;"><strong>المسمى الوظيفي المطلوب:</strong></td>
+              <td style="width:22%;"><strong>المسمى الوظيفي المطلوب:</strong></td>
               <td style="width:28%;"><strong>${emp.job || d.job || 'معلم قرآن كريم'}</strong></td>
-              <td style="background:#fafafa; width:22%;"><strong>الفترات المطلوبة:</strong></td>
+              <td style="width:22%;"><strong>الفترات المطلوبة:</strong></td>
               <td style="width:28%;"><strong>${emp.period || d.periods || 'الفجر / العصر'}</strong></td>
             </tr>
             <tr>
-              <td style="background:#fafafa;"><strong>مبررات التعيين 1 و 2:</strong></td>
+              <td><strong>مبررات التعيين 1 و 2:</strong></td>
               <td colspan="3">${item.bodyText || d.r1 || 'حاجة الحلقة الشديدة لمعلم معتمد وتوفر المؤهل اللازم.'}</td>
             </tr>
           </table>
@@ -1101,20 +1101,20 @@ function openPrintModal(item) {
     } else if (typeStr.includes('مباشرة')) {
       actionTableHtml = `
         <div style="margin-bottom:14px;">
-          <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات الإجازة وتاريخ المباشرة الفعلي</h4>
-          <table style="width:100%; border-collapse:collapse; font-size:0.85rem;" border="1" cellpadding="5">
+          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات الإجازة وتاريخ المباشرة الفعلي</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem; background:#ffffff; color:#000000;" border="1" cellpadding="5">
             <tr>
-              <td style="background:#fafafa; width:22%;"><strong>نوع الإجازة:</strong></td>
+              <td style="width:22%;"><strong>نوع الإجازة:</strong></td>
               <td style="width:28%;">[ ☑ سنوية ] [ ☐ اضطرارية ] [ ☐ مرضية ] [ ☐ زواج ] [ ☐ قطع إجازة ]</td>
-              <td style="background:#fafafa; width:22%;"><strong>مدة الإجازة:</strong></td>
+              <td style="width:22%;"><strong>مدة الإجازة:</strong></td>
               <td style="width:28%;"><strong>( ......... ) يوم / أيام</strong></td>
             </tr>
             <tr>
-              <td style="background:#fafafa;"><strong>تاريخ المباشرة الفعلي:</strong></td>
+              <td><strong>تاريخ المباشرة الفعلي:</strong></td>
               <td colspan="3"><strong>${item.startDate || item.date}م</strong></td>
             </tr>
             <tr>
-              <td style="background:#fafafa;"><strong>اعتماد جهة عمل الموظف:</strong></td>
+              <td><strong>اعتماد جهة عمل الموظف:</strong></td>
               <td colspan="3">نأمل من فضيلتكم اعتماد مباشرة المذكور أعلاه من تاريخ قطعه لإجازته ومباشرته وإكمال اللازم.</td>
             </tr>
           </table>
@@ -1123,16 +1123,16 @@ function openPrintModal(item) {
     } else if (typeStr.includes('إجازة')) {
       actionTableHtml = `
         <div style="margin-bottom:14px;">
-          <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات طلب / منح الإجازة</h4>
-          <table style="width:100%; border-collapse:collapse; font-size:0.85rem;" border="1" cellpadding="5">
+          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات طلب / منح الإجازة</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem; background:#ffffff; color:#000000;" border="1" cellpadding="5">
             <tr>
-              <td style="background:#fafafa; width:22%;"><strong>نوع الإجازة المطلوبة:</strong></td>
+              <td style="width:22%;"><strong>نوع الإجازة المطلوبة:</strong></td>
               <td style="width:28%;"><strong>${item.extraType || 'إجازة اعتيادية / زواج'}</strong></td>
-              <td style="background:#fafafa; width:22%;"><strong>فترة الإجازة:</strong></td>
+              <td style="width:22%;"><strong>فترة الإجازة:</strong></td>
               <td style="width:28%;">من ${item.startDate || item.date} إلى ${item.endDate || '—'}</td>
             </tr>
             <tr>
-              <td style="background:#fafafa;"><strong>بيان الإجازة والسبب:</strong></td>
+              <td><strong>بيان الإجازة والسبب:</strong></td>
               <td colspan="3">${item.bodyText || 'نأمل التكرم بالمرخص للمذكور أعلاه بالإجازة الموضحة أعلاه وفق اللوائح المعتمدة.'}</td>
             </tr>
           </table>
@@ -1141,24 +1141,24 @@ function openPrintModal(item) {
     } else if (typeStr.includes('مساءلة') || typeStr.includes('مخالفة') || typeStr.includes('لفت نظر') || typeStr.includes('لوم')) {
       actionTableHtml = `
         <div style="margin-bottom:14px;">
-          <h4 style="background:#fee2e2; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold; color:#991b1b;">بيانات المساءلة والإنذار الإداري</h4>
-          <table style="width:100%; border-collapse:collapse; font-size:0.85rem;" border="1" cellpadding="5">
+          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات المساءلة والإنذار الإداري</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem; background:#ffffff; color:#000000;" border="1" cellpadding="5">
             <tr>
-              <td style="background:#fafafa; width:22%;"><strong>نوع الإشعار/المخالفة:</strong></td>
-              <td style="width:28%;"><strong style="color:#991b1b;">${typeStr}</strong></td>
-              <td style="background:#fafafa; width:22%;"><strong>تاريخ الملاحظة:</strong></td>
+              <td style="width:22%;"><strong>نوع الإشعار/المخالفة:</strong></td>
+              <td style="width:28%;"><strong>${typeStr}</strong></td>
+              <td style="width:22%;"><strong>تاريخ الملاحظة:</strong></td>
               <td style="width:28%;">${item.startDate || item.date}م</td>
             </tr>
             <tr>
-              <td style="background:#fafafa;"><strong>تفاصيل المخالفة / التأخير:</strong></td>
+              <td><strong>تفاصيل المخالفة / التأخير:</strong></td>
               <td colspan="3">[ ☐ التأخير في الحضور ☐ ترك العمل أثناء الدوام ☐ الخروج المبكر ☐ الغياب عن العمل ]<br>${item.bodyText || 'لاحظنا التغيّب أو التأخر عن الدوام الرسمي ونلفت نظركم لضرورة الالتزام.'}</td>
             </tr>
             <tr>
-              <td style="background:#fafafa;"><strong>إفادة الموظف / المعلم:</strong></td>
+              <td><strong>إفادة الموظف / المعلم:</strong></td>
               <td colspan="3">...............................................................................................................................................</td>
             </tr>
             <tr>
-              <td style="background:#fafafa;"><strong>توصية رئيس الوحدة:</strong></td>
+              <td><strong>توصية رئيس الوحدة:</strong></td>
               <td colspan="3">إفادة الموظف: [ ☐ مقبولة ☐ غير مقبولة ] | تكرار المخالفة: [ ☐ الأولى ☐ الثانية ☐ الثالثة ☐ الرابعة ]<br>الجزاء المقترح: [ ☐ تنبيه لفظي ☐ إنذار كتابي ☐ حسم من الراتب ]</td>
             </tr>
           </table>
@@ -1167,16 +1167,16 @@ function openPrintModal(item) {
     } else if (typeStr.includes('صرف مستحق')) {
       actionTableHtml = `
         <div style="margin-bottom:14px;">
-          <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات صرف المستحق المالي</h4>
-          <table style="width:100%; border-collapse:collapse; font-size:0.85rem;" border="1" cellpadding="5">
+          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات صرف المستحق المالي</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem; background:#ffffff; color:#000000;" border="1" cellpadding="5">
             <tr>
-              <td style="background:#fafafa; width:22%;"><strong>الراتب الأساسي (ريال):</strong></td>
+              <td style="width:22%;"><strong>الراتب الأساسي (ريال):</strong></td>
               <td style="width:28%;">................... ريال</td>
-              <td style="background:#fafafa; width:22%;"><strong>المبلغ المطلوب (ريال):</strong></td>
+              <td style="width:22%;"><strong>المبلغ المطلوب (ريال):</strong></td>
               <td style="width:28%;"><strong>${item.extraType || '................... ريال'}</strong></td>
             </tr>
             <tr>
-              <td style="background:#fafafa;"><strong>نوع وسبب الطلب:</strong></td>
+              <td><strong>نوع وسبب الطلب:</strong></td>
               <td colspan="3">صرف مستحق شهر ( ${item.subject || '................... 2026م'} ) لحاجة العمل الميداني.</td>
             </tr>
           </table>
@@ -1185,16 +1185,16 @@ function openPrintModal(item) {
     } else if (typeStr.includes('انتداب')) {
       actionTableHtml = `
         <div style="margin-bottom:14px;">
-          <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">قرار وبيانات الانتداب</h4>
-          <table style="width:100%; border-collapse:collapse; font-size:0.85rem;" border="1" cellpadding="5">
+          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">قرار وبيانات الانتداب</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem; background:#ffffff; color:#000000;" border="1" cellpadding="5">
             <tr>
-              <td style="background:#fafafa; width:22%;"><strong>فترة الانتداب:</strong></td>
+              <td style="width:22%;"><strong>فترة الانتداب:</strong></td>
               <td style="width:28%;">من ${item.startDate || item.date} إلى ${item.endDate || '—'}</td>
-              <td style="background:#fafafa; width:22%;"><strong>عدد أيام الانتداب:</strong></td>
+              <td style="width:22%;"><strong>عدد أيام الانتداب:</strong></td>
               <td style="width:28%;"><strong>( ......... ) يوم/أيام</strong></td>
             </tr>
             <tr>
-              <td style="background:#fafafa;"><strong>الغرض من الانتداب:</strong></td>
+              <td><strong>الغرض من الانتداب:</strong></td>
               <td colspan="3">${item.bodyText || 'نظرًا لحاجة الوحدة لإنجاز المهمة الرسمية الموكلة بحرم المسجد الحرام.'}</td>
             </tr>
           </table>
@@ -1203,9 +1203,9 @@ function openPrintModal(item) {
     } else if (typeStr.includes('حضور') || typeStr.includes('كشف')) {
       actionTableHtml = `
         <div style="margin-bottom:14px;">
-          <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">كشف الحضور والأنصراف الرسمي</h4>
-          <table style="width:100%; border-collapse:collapse; font-size:0.8rem; text-align:center;" border="1" cellpadding="4">
-            <tr style="background:#fafafa;">
+          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">كشف الحضور والأنصراف الرسمي</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.8rem; text-align:center; background:#ffffff; color:#000000;" border="1" cellpadding="4">
+            <tr>
               <th>اليوم</th><th>التاريخ</th><th>الفترة الصباحية (حضور)</th><th>الفترة الصباحية (انصراف)</th><th>الفترة المسائية (حضور)</th><th>الفترة المسائية (انصراف)</th><th>التوقيع</th>
             </tr>
             <tr><td>الأحد</td><td>01 / 01</td><td>:</td><td>:</td><td>:</td><td>:</td><td>..................</td></tr>
@@ -1219,16 +1219,16 @@ function openPrintModal(item) {
     } else {
       actionTableHtml = `
         <div style="margin-bottom:14px;">
-          <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات الإجراء والطلب التفصيلية</h4>
-          <table style="width:100%; border-collapse:collapse; font-size:0.85rem;" border="1" cellpadding="5">
+          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات الإجراء والطلب التفصيلية</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem; background:#ffffff; color:#000000;" border="1" cellpadding="5">
             <tr>
-              <td style="background:#fafafa; width:20%;"><strong>نوع الطلب / البيان:</strong></td>
+              <td style="width:20%;"><strong>نوع الطلب / البيان:</strong></td>
               <td><strong>${item.extraType || item.subject || item.type}</strong></td>
-              <td style="background:#fafafa; width:20%;"><strong>فترة الإجراء والتواريخ:</strong></td>
+              <td style="width:20%;"><strong>فترة الإجراء والتواريخ:</strong></td>
               <td>من ${item.startDate || item.date} إلى ${item.endDate || 'مستمر'}</td>
             </tr>
             <tr>
-              <td style="background:#fafafa;"><strong>مبررات الإجراء / الملاحظات:</strong></td>
+              <td><strong>مبررات الإجراء / الملاحظات:</strong></td>
               <td colspan="3">${item.bodyText || 'حسب الأنظمة واللوائح والتعليمات المعتمدة بوحدة الشؤون التعليمية.'}</td>
             </tr>
           </table>
@@ -1237,17 +1237,17 @@ function openPrintModal(item) {
     }
 
     bodyHtml = `
-      <h3 style="text-align:center; margin-bottom:15px; color:var(--primary-900); text-decoration:underline;">( ${item.type || 'نموذج إداري'} )</h3>
+      <h3 style="text-align:center; margin-bottom:15px; color:#000000; text-decoration:underline;">( ${item.type || 'نموذج إداري'} )</h3>
       ${baseEmpTableHtml}
       ${actionTableHtml}
       
-      <div style="margin-top:15px; font-size:0.9rem; line-height:1.7;">
+      <div style="margin-top:15px; font-size:0.9rem; line-height:1.7; color:#000000;">
         <p style="font-weight:bold; margin-bottom:4px;">فضيلة رئيس وحدة الشؤون المالية والإدارية سلمه الله</p>
         <p style="margin-bottom:4px;">السلام عليكم ورحمة الله وبركاته، وبعد:</p>
         <p style="margin-bottom:8px;">نظرًا لحاجة العمل الميداني والتعليمي بالحلقات، نأمل اعتماد قرار المذكور أعلاه وإكمال اللازم.</p>
       </div>
 
-      <div style="margin-top:15px; padding:8px 12px; border:1px dashed #000; background:#fafafa; font-size:0.85rem;">
+      <div style="margin-top:15px; padding:8px 12px; border:1px solid #000000; background:#ffffff; color:#000000; font-size:0.85rem;">
         <p style="margin:0 0 4px 0;"><strong>توجيه رئيس وحدة الشؤون المالية والإدارية:</strong> [ ☑ موافق ] [ ☐ غير موافق ]</p>
         <p style="margin:0;"><strong>التوقيع:</strong> ..................................... | <strong>التاريخ:</strong> &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp; / 2026م</p>
       </div>
