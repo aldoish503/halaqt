@@ -224,10 +224,33 @@
 
         <!-- النماذج للموظفين المسجلين -->
         <div id="existingEmpSection" class="hidden" style="margin-top:20px;">
-          <label>اختر الموظف المعني بالطلب *</label>
-          <select id="formEmpSelect" onchange="onEmpSelectForForm()">
-            <option value="">-- اختر الموظف من السجل --</option>
-          </select>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <label style="margin:0;">اختر الموظف المعني بالطلب *</label>
+            <label class="checkbox-label" style="font-size:0.85rem; color:var(--primary-800); font-weight:bold;">
+              <input type="checkbox" id="isMultiEmpAssignmentCheck" onchange="toggleMultiEmpSelectionMode()"> 👥 تكليف / إجراء جماعي (أكثر من موظف)
+            </label>
+          </div>
+
+          <!-- اختيار موظف واحد -->
+          <div id="singleEmpContainer">
+            <select id="formEmpSelect" onchange="onEmpSelectForForm()">
+              <option value="">-- اختر الموظف من السجل --</option>
+            </select>
+          </div>
+
+          <!-- اختيار عدة موظفين (تكليف جماعي) -->
+          <div id="multiEmpContainer" class="hidden" style="border:1px solid var(--gold-300); padding:12px; border-radius:8px; background:#fffcf6;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+              <strong>تحديد الموظفين المكلفين بالجملة:</strong>
+              <div>
+                <button type="button" class="btn btn-outline btn-sm" onclick="selectAllFormEmployees(true)">تحديد الكل</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="selectAllFormEmployees(false)">إلغاء الكل</button>
+              </div>
+            </div>
+            <div id="multiEmpChecklist" style="max-height:180px; overflow-y:auto; border:1px solid var(--border-color); padding:8px; border-radius:6px; background:#fff;">
+              <!-- سيتم توليد الموظفين برمجياً -->
+            </div>
+          </div>
 
           <div id="formEmpPreview" class="card hidden" style="background:var(--gold-100); margin-top:12px;">
             <p><strong>الاسم:</strong> <span id="f-name"></span> | <strong>الرقم الوظيفي:</strong> <span id="f-id"></span> | <strong>الهوية:</strong> <span id="f-nid"></span></p>

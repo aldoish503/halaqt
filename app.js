@@ -321,14 +321,62 @@ function onEmpSelectForForm() {
   prev.classList.remove('hidden');
 }
 
+function toggleMultiEmpSelectionMode() {
+  const isMulti = document.getElementById('isMultiEmpAssignmentCheck')?.checked;
+  const singleCont = document.getElementById('singleEmpContainer');
+  const multiCont = document.getElementById('multiEmpContainer');
+  const empPrev = document.getElementById('formEmpPreview');
+
+  if (isMulti) {
+    singleCont?.classList.add('hidden');
+    multiCont?.classList.remove('hidden');
+    empPrev?.classList.add('hidden');
+  } else {
+    singleCont?.classList.remove('hidden');
+    multiCont?.classList.add('hidden');
+  }
+}
+
+function selectAllFormEmployees(checkedState) {
+  document.querySelectorAll('.multi-emp-cb').forEach(cb => {
+    cb.checked = checkedState;
+  });
+}
+
 function submitDefinedForm() {
   const formTitle = document.getElementById('definedFormTypeSelect').value;
-  const employeeId = document.getElementById('formEmpSelect').value;
-
   if (!formTitle) return showToast('اختر نوع النموذج', true);
-  if (!employeeId) return showToast('اختر الموظف', true);
 
-  const emp = APP_DATA.employees.find(e => String(e.id) === String(employeeId));
+  const isMulti = document.getElementById('isMultiEmpAssignmentCheck')?.checked;
+  let employeeId = '';
+  let employeeName = '';
+  let assignedEmployeesList = [];
+
+  if (isMulti) {
+    const checkedCbs = Array.from(document.querySelectorAll('.multi-emp-cb:checked'));
+    if (!checkedCbs.length) return showToast('اختر موظفاً واحداً على الأقل للتكليف الجماعي', true);
+
+    checkedCbs.forEach(cb => {
+      const emp = APP_DATA.employees.find(e => String(e.id) === String(cb.value));
+      if (emp) {
+        assignedEmployeesList.push(emp);
+      } else {
+        assignedEmployeesList.push({ id: cb.value, name: cb.getAttribute('data-name') || cb.value });
+      }
+    });
+
+    employeeId = 'تكليف جماعي (' + assignedEmployeesList.length + ' موظفين)';
+    employeeName = assignedEmployeesList.map(e => e.name).join('، ');
+  } else {
+    employeeId = document.getElementById('formEmpSelect').value;
+    if (!employeeId) return showToast('اختر الموظف المعني بالطلب', true);
+    const emp = APP_DATA.employees.find(e => String(e.id) === String(employeeId));
+    if (emp) {
+      assignedEmployeesList.push(emp);
+      employeeName = emp.name;
+    }
+  }
+
   const outgoing = generateNextOutgoingNumber();
   const todayStr = new Date().toLocaleDateString('ar-SA');
 
@@ -340,13 +388,14 @@ function submitDefinedForm() {
     outgoingNumber: outgoing.fullHeader,
     date: todayStr,
     type: formTitle,
-    subject: formTitle + ' - ' + (emp ? emp.name : ''),
-    employeeName: emp ? emp.name : '',
+    subject: formTitle + ' - ' + (isMulti ? `تكليف جماعي (${assignedEmployeesList.length} موظفاً)` : employeeName),
+    employeeName: employeeName,
     employeeId: employeeId,
     startDate: startDate,
     endDate: endDate,
     extraType: extraType,
-    empDetails: emp || {},
+    isMultiAssignment: isMulti,
+    assignedEmployeesList: assignedEmployeesList,
     status: 'قيد التنفيذ',
     bodyText: document.getElementById('formEmpNotes').value
   };
@@ -708,6 +757,22 @@ function renderDropdowns() {
     });
     select.value = curr;
   });
+
+  const checklist = document.getElementById('multiEmpChecklist');
+  if (checklist) {
+    checklist.innerHTML = '';
+    if (!APP_DATA.employees.length) {
+      checklist.innerHTML = '<p style="font-size:0.85rem; color:#888; text-align:center;">لا يوجد موظفون بالسجل</p>';
+    } else {
+      APP_DATA.employees.forEach(e => {
+        checklist.innerHTML += `
+          <label class="checkbox-label" style="display:block; margin-bottom:6px; font-weight:normal; font-size:0.9rem;">
+            <input type="checkbox" class="multi-emp-cb" value="${e.id}" data-name="${e.name}">
+            <strong>${e.name}</strong> (${e.id}) - <span style="color:#666;">${e.job || 'موظف'}</span>
+          </label>`;
+      });
+    }
+  }
 }
 
 function submitMeeting() {
@@ -825,7 +890,39 @@ function openPrintModal(item) {
   const d = item.details || {};
   const emp = item.empDetails || {};
 
-  if (item.type === 'طلب تعيين' && d.name) {
+  // فحص التكليف الجماعي (أكثر من موظف)
+  if (item.assignedEmployeesList && item.assignedEmployeesList.length > 1) {
+    let empRowsHtml = item.assignedEmployeesList.map((e, idx) => `
+      <tr>
+        <td style="text-align:center;">${idx + 1}</td>
+        <td><strong>${e.name}</strong></td>
+        <td style="text-align:center;">${e.id || '—'}</td>
+        <td>${e.job || 'معلم / موظف'}</td>
+        <td>${e.period || 'فترة التكليف الرسمية'}</td>
+      </tr>
+    `).join('');
+
+    bodyHtml = `
+      <h3 style="text-align:center; margin-bottom:20px; color:var(--primary-900);">قرار / نموذج تكليف جماعي (${item.type})</h3>
+      <p><strong>بيانات الموظفين المعنيين بالتكليف الجماعي (عدد: ${item.assignedEmployeesList.length} موظفاً):</strong></p>
+      <table style="width:100%; border-collapse:collapse; margin-bottom:15px; font-size:0.9rem;" border="1" cellpadding="6">
+        <tr style="background:#f4f4f4;">
+          <th style="width:40px;">م</th>
+          <th>اسم الموظف / المعلم</th>
+          <th>الرقم الوظيفي</th>
+          <th>المسمى الوظيفي</th>
+          <th>الفترة / التفاصيل</th>
+        </tr>
+        ${empRowsHtml}
+      </table>
+      <p><strong>تاريخ بداية الإجراء/التكليف:</strong> ${item.startDate || item.date} ${item.endDate ? ' | <strong>تاريخ النهاية:</strong> ' + item.endDate : ''}</p>
+      <p><strong>المهام والتوجيهات:</strong> ${item.bodyText || 'إكمال كافة الالتزامات والمهام المسندة لحاجة العمل.'}</p>
+      <div style="margin-top:20px; padding:12px; border:1px dashed var(--gold-600); background:#fffdfa;">
+        <p><strong>توجيه رئيس وحدة الشؤون المالية والإدارية:</strong> [ ☑ موافق ] [ ☐ غير موافق ]</p>
+        <p><strong>اعتماد تنفيذ التكليف الجماعي:</strong> تم الاعتماد والتنفيذ بموجب الاعتماد المالي والإداري.</p>
+      </div>
+    `;
+  } else if (item.type === 'طلب تعيين' && d.name) {
     const nid = String(d.nationalId || '').padStart(10, '0');
     let boxesHtml = '<div class="id-boxes-container" style="justify-content:center; margin:16px 0;">';
     for (let i = 0; i < 10; i++) boxesHtml += `<div class="id-box">${nid.charAt(i)}</div>`;
