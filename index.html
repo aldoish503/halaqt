@@ -89,13 +89,15 @@
 
         <label>نوع النموذج المطلوب إصداره *</label>
         <select id="definedFormTypeSelect" onchange="onFormTypeChange()">
-          <option value="">-- اختر النموذج --</option>
-          <option value="طلب تعيين">طلب تعيين (مرشح جديد)</option>
-          <option value="إنهاء تكليف">إنهاء تكليف موظف</option>
-          <option value="طلب تحويل فترة">طلب تحويل فترة</option>
-          <option value="طلب تحويل فترة مؤقتة">طلب تحويل فترة مؤقتة</option>
-          <option value="طلب إضافة فترة">طلب إضافة فترة</option>
-          <option value="طلب تغيير مسمى">طلب تغيير مسمى</option>
+          <option value="">-- اختر النموذج الإداري --</option>
+          <option value="طلب تعيين">طلب تعيين (مرشح جديد بالحلقات)</option>
+          <option value="إنهاء تكليف">إنهاء تكليف (قرار / نموذج إنهاء تكليف)</option>
+          <option value="إشعار مباشرة عمل">إشعار مباشرة عمل (عودة من إجازة / قطع إجازة)</option>
+          <option value="طلب / منح إجازة">طلب / منح إجازة (زواج / مرضية / اعتيادية)</option>
+          <option value="استثناء دوام">استثناء دوام / تعديل فترة تكليف</option>
+          <option value="إسقاط عهدة">إسقاط عهدة أجهزة أو نقل للمستودع</option>
+          <option value="منح صلاحيات">منح / إضافة صلاحيات إلكترونية (نظام وقار)</option>
+          <option value="طلب تحويل فترة">طلب تحويل فترة تكليف</option>
         </select>
 
         <!-- نموذج التعيين لمرشح جديد -->
@@ -193,9 +195,25 @@
             <div id="f-id-boxes" class="id-boxes-container"></div>
           </div>
 
-          <div class="field-group" style="margin-top:14px;">
-            <label>ملاحظات / بيان الإجراء المطلوبة</label>
-            <textarea id="formEmpNotes" placeholder="أدخل تفاصيل التكليف أو التحويل المطلوب..."></textarea>
+          <!-- الحقول الديناميكية الخاصة بكل نموذج -->
+          <div id="dynamicFormFields" class="field-row" style="margin-top:14px;">
+            <div class="field-group">
+              <label>تاريخ البداية / تاريخ المباشرة / العهدة</label>
+              <input type="date" id="formStartDate">
+            </div>
+            <div class="field-group">
+              <label>تاريخ النهاية (إن وجد)</label>
+              <input type="date" id="formEndDate">
+            </div>
+            <div class="field-group">
+              <label>البيان / النوع / تفاصيل الصلاحية</label>
+              <input type="text" id="formExtraType" placeholder="مثال: إجازة زواج / حاسب dell / صلاحية وقار">
+            </div>
+          </div>
+
+          <div class="field-group" style="margin-top:10px;">
+            <label>مبررات / ملاحظات الإجراء الإداري</label>
+            <textarea id="formEmpNotes" placeholder="أدخل الملاحظات والتوجيهات الخاصة بالنموذج..."></textarea>
           </div>
 
           <div class="btn-row">

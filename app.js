@@ -332,6 +332,10 @@ function submitDefinedForm() {
   const outgoing = generateNextOutgoingNumber();
   const todayStr = new Date().toLocaleDateString('ar-SA');
 
+  const startDate = document.getElementById('formStartDate')?.value || '';
+  const endDate = document.getElementById('formEndDate')?.value || '';
+  const extraType = document.getElementById('formExtraType')?.value || '';
+
   const archiveItem = {
     outgoingNumber: outgoing.fullHeader,
     date: todayStr,
@@ -339,6 +343,10 @@ function submitDefinedForm() {
     subject: formTitle + ' - ' + (emp ? emp.name : ''),
     employeeName: emp ? emp.name : '',
     employeeId: employeeId,
+    startDate: startDate,
+    endDate: endDate,
+    extraType: extraType,
+    empDetails: emp || {},
     status: 'قيد التنفيذ',
     bodyText: document.getElementById('formEmpNotes').value
   };
@@ -749,8 +757,10 @@ function openPrintModal(item) {
   const container = document.getElementById('printContent');
   let bodyHtml = '';
 
-  if (item.type === 'طلب تعيين' && item.details) {
-    const d = item.details;
+  const d = item.details || {};
+  const emp = item.empDetails || {};
+
+  if (item.type === 'طلب تعيين' && d.name) {
     const nid = String(d.nationalId || '').padStart(10, '0');
     let boxesHtml = '<div class="id-boxes-container" style="justify-content:center; margin:16px 0;">';
     for (let i = 0; i < 10; i++) boxesHtml += `<div class="id-box">${nid.charAt(i)}</div>`;
@@ -764,6 +774,95 @@ function openPrintModal(item) {
       <p><strong>المسمى الوظيفي المطلوب:</strong> ${d.job} | <strong>الوحدة:</strong> ${d.unit} | <strong>القسم:</strong> ${d.section}</p>
       <p><strong>الفترات المطلوبة:</strong> ${d.periods || 'غير محدد'}</p>
       <p><strong>مبررات التعيين:</strong> ${d.r1 || ''} - ${d.r2 || ''}</p>
+    `;
+  } else if (item.type === 'إنهاء تكليف') {
+    bodyHtml = `
+      <h3 style="text-align:center; margin-bottom:20px; color:var(--primary-900);">قرار / نموذج إنهاء تكليف</h3>
+      <table style="width:100%; border-collapse:collapse; margin-bottom:15px; font-size:0.95rem;" border="1" cellpadding="6">
+        <tr style="background:#f4f4f4;">
+          <th>الاسم</th>
+          <th>الرقم الوظيفي</th>
+          <th>مسمى التكليف</th>
+          <th>فترات التكليف</th>
+          <th>تاريخ بداية ونهاية التكليف</th>
+        </tr>
+        <tr>
+          <td>${item.employeeName}</td>
+          <td>${item.employeeId}</td>
+          <td>${emp.job || item.extraType || 'مكلف'}</td>
+          <td>${emp.period || 'فترة التكليف الرسمية'}</td>
+          <td>من ${item.startDate || '—'} إلى ${item.endDate || 'الآن'}</td>
+        </tr>
+      </table>
+      <p><strong>المهام والتوجيه خلال التكليف:</strong> ${item.bodyText || 'إكمال كافة الالتزامات والمهام المسندة.'}</p>
+      <div style="margin-top:15px; padding:10px; border:1px dashed #ccc; background:#fafafa;">
+        <p><strong>توجيه رئيس وحدة الشؤون المالية والإدارية:</strong> [ ☑ موافق ] [ ☐ غير موافق ]</p>
+        <p><strong>اعتماد تنفيذ طلب التكليف:</strong> تم التنفيذ بموجب الاعتماد المالي والإداري.</p>
+      </div>
+    `;
+  } else if (item.type === 'إشعار مباشرة عمل') {
+    const nid = String(emp.nationalId || '').padStart(10, '0');
+    let boxesHtml = '<div class="id-boxes-container" style="justify-content:center; margin:12px 0;">';
+    for (let i = 0; i < 10; i++) boxesHtml += `<div class="id-box">${nid.charAt(i)}</div>`;
+    boxesHtml += '</div>';
+
+    bodyHtml = `
+      <h3 style="text-align:center; margin-bottom:20px; color:var(--primary-900);">إشعار مباشرة عمل (عودة من إجازة / قطع إجازة)</h3>
+      <p><strong>فضيلة رئيس وحدة الشؤون المالية والإدارية سلمه الله</strong></p>
+      <p>السلام عليكم ورحمة الله وبركاته، وبعد:</p>
+      <p>نأمل منكم اعتماد مباشرة المذكور أدناه من تاريخ قطعه لإجازته ومباشرته وإكمال اللازم:</p>
+      <p><strong>الاسم:</strong> ${item.employeeName} | <strong>الرقم الوظيفي:</strong> ${item.employeeId}</p>
+      ${boxesHtml}
+      <p><strong>الوحدة:</strong> الشؤون التعليمية | <strong>المسمى الوظيفي:</strong> ${emp.job || 'معلم/موظف'}</p>
+      <p><strong>نوع الإجازة:</strong> ${item.extraType || 'سنوية / مرخص بها'} | <strong>تاريخ المباشرة الفعلي:</strong> ${item.startDate || item.date}</p>
+      <p style="margin-top:15px;"><strong>ملاحظات الإدارة:</strong> ${item.bodyText || 'تمت المباشرة وإكمال الإجراءات النظامية.'}</p>
+    `;
+  } else if (item.type === 'طلب / منح إجازة') {
+    bodyHtml = `
+      <h3 style="text-align:center; margin-bottom:20px; color:var(--primary-900);">طلب / منح إجازة إدارية</h3>
+      <p><strong>فضيلة رئيس وحدة الموارد البشرية والمالية سلمه الله</strong></p>
+      <p>السلام عليكم ورحمة الله وبركاته، وبعد:</p>
+      <p>فنسأل الله لكم دوام التوفيق والسداد، نأمل منكم منح إجازة (<strong>${item.extraType || 'اعتيادية'}</strong>) للمذكور أدناه:</p>
+      <table style="width:100%; border-collapse:collapse; margin:15px 0;" border="1" cellpadding="6">
+        <tr style="background:#f4f4f4;"><th>الاسم</th><th>الرقم الوظيفي</th><th>الفترة المحددة</th></tr>
+        <tr><td>${item.employeeName}</td><td>${item.employeeId}</td><td>من ${item.startDate || '—'} إلى ${item.endDate || '—'}</td></tr>
+      </table>
+      <p><strong>البيان والسبب:</strong> ${item.bodyText || 'حسب الأنظمة واللوائح المعتمدة.'}</p>
+    `;
+  } else if (item.type === 'استثناء دوام') {
+    bodyHtml = `
+      <h3 style="text-align:center; margin-bottom:20px; color:var(--primary-900);">طلب / قرار استثناء دوام وتعديل فترة</h3>
+      <p><strong>سعادة رئيس وحدة الشؤون المالية والإدارية حفظه الله</strong></p>
+      <p>السلام عليكم ورحمة الله وبركاته، وبعد:</p>
+      <p>نفيدكم بأن الموظف/المعلم المذكور أدناه يطلب اعتماد استثناء الدوام وتعديل الفترة وفق البيانات التالية:</p>
+      <p><strong>اسم الموظف:</strong> ${item.employeeName} | <strong>الرقم الوظيفي:</strong> ${item.employeeId}</p>
+      <p><strong>فترة الاستثناء:</strong> من ${item.startDate || '—'} إلى ${item.endDate || '—'}</p>
+      <p><strong>مبررات التفريغ / الاستثناء:</strong> ${item.bodyText || 'لحاجة العمل الميداني والتعليمي.'}</p>
+    `;
+  } else if (item.type === 'إسقاط عهدة') {
+    bodyHtml = `
+      <h3 style="text-align:center; margin-bottom:20px; color:var(--primary-900);">نموذج إسقاط عهدة أو نقل للمستودع</h3>
+      <p><strong>المكرم رئيس وحدة الموارد البشرية والمالية سلمه الله</strong></p>
+      <p>نفيدكم بأن لدينا عدة أصناف تم الاستغناء عنها / غير صالحة للاستخدام وهي كالآتي:</p>
+      <table style="width:100%; border-collapse:collapse; margin:15px 0;" border="1" cellpadding="6">
+        <tr style="background:#f4f4f4;"><th>م</th><th>نوع الصنف والبيان</th><th>المقدم / العهدة</th><th>الحالة الإدارية</th></tr>
+        <tr><td>1</td><td>${item.extraType || 'أجهزة ومعدات مكتبية'}</td><td>${item.employeeName} (${item.employeeId})</td><td>غير صالح للاستخدام / نقل للمستودع</td></tr>
+      </table>
+      <p><strong>ملاحظات الطلب:</strong> ${item.bodyText || 'إسقاط عهدة ونقل للمستودع.'}</p>
+      <div style="margin-top:20px; display:flex; justify-content:space-between; text-align:center; font-size:0.85rem;">
+        <div><strong>اعتماد اللجنة</strong><br><br>...................</div>
+        <div><strong>مسؤول المستودع</strong><br><br>...................</div>
+        <div><strong>رئيس وحدة الموارد البشرية</strong><br>منير بن معلا العمري</div>
+      </div>
+    `;
+  } else if (item.type === 'منح صلاحيات') {
+    bodyHtml = `
+      <h3 style="text-align:center; margin-bottom:20px; color:var(--primary-900);">طلب منح وإضافة صلاحيات إلكترونية (نظام وقار)</h3>
+      <p><strong>سعادة مسؤول شعبة التقنية سلمه الله</strong></p>
+      <p>السلام عليكم ورحمة الله وبركاته، وبعد:</p>
+      <p>فنسأل الله لكم دوام التوفيق والسداد، نفيدكم بطلب منح صلاحية (<strong>${item.extraType || 'إضافة الحلقات والدرجات'}</strong>) في نظام وقار للمذكور أدناه لحاجة العمل:</p>
+      <p><strong>اسم الموظف:</strong> ${item.employeeName} | <strong>الرقم الوظيفي:</strong> ${item.employeeId}</p>
+      <p><strong>تفاصيل ومبررات الطلب:</strong> ${item.bodyText || 'منح الصلاحيات اللازمة لمتابعة الحلقات.'}</p>
     `;
   } else {
     bodyHtml = `
@@ -796,10 +895,10 @@ function openPrintModal(item) {
     </div>
 
     <div class="print-footer">
-      <div>ختم الجهة</div>
+      <div>ختم الجهة الرسمية</div>
       <div style="text-align:center;">
         <strong>رئيس وحدة الشؤون التعليمية</strong><br><br>
-        ...................................
+        يزيد بن عبد الرحمن الدويش
       </div>
     </div>
   `;
