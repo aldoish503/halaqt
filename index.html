@@ -271,9 +271,24 @@
           <button class="btn btn-outline btn-sm" onclick="showSection('mainChoice')">رجوع ↩️</button>
         </div>
 
-        <div class="field-group">
-          <label>اختر الموظف (اختياري)</label>
-          <select id="openEmpSelect"><option value="">-- بدون موظف مخصص --</option></select>
+        <div class="field-row">
+          <div class="field-group">
+            <label>اختر الموجه إليه الخطاب (المخاطب المعتمد من تحليل 1000 ملف) *</label>
+            <select id="openLetterAddressee">
+              <option value="فضيلة رئيس وحدة الشؤون المالية والإدارية سلمه الله">فضيلة رئيس وحدة الشؤون المالية والإدارية سلمه الله</option>
+              <option value="سعادة رئيس وحدة الشؤون المالية والإدارية حفظه الله">سعادة رئيس وحدة الشؤون المالية والإدارية حفظه الله</option>
+              <option value="فضيلة المدير التنفيذي لحلقات تحفيظ القرآن الكريم سلمه الله">فضيلة المدير التنفيذي لحلقات تحفيظ القرآن الكريم سلمه الله</option>
+              <option value="سعادة رئيس وحدة الموارد البشرية والمالية سلمه الله">سعادة رئيس وحدة الموارد البشرية والمالية سلمه الله</option>
+              <option value="سعادة رئيس شعبة المراقبة والتقويم سلمه الله">سعادة رئيس شعبة المراقبة والتقويم سلمه الله</option>
+              <option value="سعادة مسؤول شعبة التقنية سلمه الله">سعادة مسؤول شعبة التقنية سلمه الله</option>
+              <option value="فضيلة رئيس وحدة القبول والتسجيل سلمه الله">فضيلة رئيس وحدة القبول والتسجيل سلمه الله</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>اختر الموظف (اختياري)</label>
+            <select id="openEmpSelect"><option value="">-- بدون موظف مخصص --</option></select>
+          </div>
         </div>
 
         <div class="field-group" style="margin-top:10px;">
@@ -282,8 +297,8 @@
         </div>
 
         <div class="field-group" style="margin-top:10px;">
-          <label>نص الخطاب الكامل *</label>
-          <textarea id="openLetterBody" style="min-height:160px;" placeholder="اكتب نص الخطاب والتوجيه المباشر هنا..."></textarea>
+          <label>نص الخطاب والتوجيه المباشر *</label>
+          <textarea id="openLetterBody" style="min-height:160px;" placeholder="السلام عليكم ورحمة الله وبركاته، وبعد: فنسأل الله لكم دوام التوفيق والسداد، نفيدكم بـ..."></textarea>
         </div>
 
         <div class="btn-row">

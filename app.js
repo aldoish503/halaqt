@@ -369,6 +369,7 @@ function submitOpenLetter() {
   const subject = document.getElementById('openLetterSubject').value.trim();
   const bodyText = document.getElementById('openLetterBody').value.trim();
   const employeeId = document.getElementById('openEmpSelect').value;
+  const addressee = document.getElementById('openLetterAddressee')?.value || 'فضيلة رئيس وحدة الشؤون المالية والإدارية سلمه الله';
 
   if (!subject || !bodyText) return showToast('ادخل موضوع ونص الخطاب', true);
 
@@ -379,8 +380,9 @@ function submitOpenLetter() {
   const archiveItem = {
     outgoingNumber: outgoing.fullHeader,
     date: todayStr,
-    type: 'خطاب حر',
+    type: 'خطاب رسمي',
     subject: subject,
+    addressee: addressee,
     employeeName: emp ? emp.name : 'عام',
     employeeId: employeeId || '—',
     status: 'قيد التنفيذ',
@@ -929,11 +931,15 @@ function openPrintModal(item) {
     `;
   } else {
     bodyHtml = `
-      <h3 style="text-align:center; margin-bottom:20px; color:var(--primary-900);">${item.subject || item.type}</h3>
-      <p><strong>المعني بالطلب:</strong> ${item.employeeName || 'عام'}</p>
-      <div style="margin-top:20px; font-size:1.1rem; min-height:150px; background:#fafafa; padding:15px; border-radius:8px;">
-        ${item.bodyText || 'لا توجد تفاصيل إضافية'}
+      <p style="font-weight:bold; font-size:1.1rem; margin-bottom:12px;">${item.addressee || 'فضيلة رئيس وحدة الشؤون المالية والإدارية سلمه الله'}</p>
+      <p style="margin-bottom:14px;">السلام عليكم ورحمة الله وبركاته، وبعد:</p>
+      <p style="margin-bottom:16px;">فنسأل الله لكم دوام التوفيق والسداد، ${item.subject ? 'نفيدكم بشأن <strong>(' + item.subject + ')</strong>' : ''}</p>
+      
+      <div style="margin:20px 0; font-size:1.05rem; min-height:140px; background:#fff; padding:12px 0; line-height:1.9;">
+        ${item.bodyText || 'نأمل من فضيلتكم التكرم بالإحاطة والعلم والتوجيه بما يلزم، شاكرين ومقدرين جهودكم.'}
       </div>
+
+      <p style="text-align:center; font-weight:bold; margin-top:25px;">والله يحفظكم ويرعاكم،، والسلام عليكم ورحمة الله وبركاته</p>
     `;
   }
 
@@ -949,7 +955,8 @@ function openPrintModal(item) {
       </div>
       <div class="print-meta">
         <strong>رقم الصادر:</strong> ${item.outgoingNumber}<br>
-        <strong>التاريخ:</strong> ${item.date}
+        <strong>التاريخ:</strong> ${item.date}<br>
+        <strong>المرفقات:</strong> بدون
       </div>
     </div>
     
