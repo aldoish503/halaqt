@@ -1080,92 +1080,60 @@ function openPrintModal(item) {
     let actionTableHtml = '';
     const typeStr = item.type || '';
 
-    if (typeStr.includes('تحويل فترة') || typeStr.includes('اضافة فترة') || typeStr.includes('الغاء فترة')) {
+    if (typeStr === '1. طلب تعيين (مرشح جديد)' || typeStr === 'طلب تعيين') {
       actionTableHtml = `
         <div style="margin-bottom:14px;">
-          <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات الفترات والإجراء المطلوب ( ${typeStr} )</h4>
+          <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات المرشح الجديد بالحلقات</h4>
           <table style="width:100%; border-collapse:collapse; font-size:0.85rem;" border="1" cellpadding="5">
             <tr>
-              <td style="background:#fafafa; width:22%;"><strong>الفترة المراد الإجراء عليها:</strong></td>
-              <td style="width:28%;"><strong>${item.extraType || 'الفترة الحالية'}</strong></td>
-              <td style="background:#fafafa; width:22%;"><strong>الفترة / التعديل الجديد:</strong></td>
-              <td style="width:28%;"><strong>${item.subject || 'حسب التوجيه'}</strong></td>
+              <td style="background:#fafafa; width:22%;"><strong>المسمى الوظيفي المطلوب:</strong></td>
+              <td style="width:28%;"><strong>${emp.job || d.job || 'معلم قرآن كريم'}</strong></td>
+              <td style="background:#fafafa; width:22%;"><strong>الفترات المطلوبة:</strong></td>
+              <td style="width:28%;"><strong>${emp.period || d.periods || 'الفجر / العصر'}</strong></td>
             </tr>
             <tr>
-              <td style="background:#fafafa;"><strong>تاريخ بداية ونهاية الإجراء:</strong></td>
-              <td>من ${item.startDate || item.date}</td>
-              <td style="background:#fafafa;"><strong>التحويل / الإضافة حتى:</strong></td>
-              <td>${item.endDate || 'حسب القرار'}</td>
-            </tr>
-            <tr>
-              <td style="background:#fafafa;"><strong>مبررات الإجراء:</strong></td>
-              <td colspan="3">${item.bodyText || '1/ حاجة العمل الميداني 2/ إعادة توزيع الفترات للحلقة 3/ استكمال النصاب.'}</td>
+              <td style="background:#fafafa;"><strong>مبررات التعيين 1 و 2:</strong></td>
+              <td colspan="3">${item.bodyText || d.r1 || 'حاجة الحلقة الشديدة لمعلم معتمد وتوفر المؤهل اللازم.'}</td>
             </tr>
           </table>
         </div>
       `;
-    } else if (typeStr.includes('مسمى') || typeStr.includes('تحويل قسم')) {
+    } else if (typeStr.includes('مباشرة')) {
       actionTableHtml = `
         <div style="margin-bottom:14px;">
-          <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات تعديل المسمى الوظيفي والقسم</h4>
+          <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات الإجازة وتاريخ المباشرة الفعلي</h4>
           <table style="width:100%; border-collapse:collapse; font-size:0.85rem;" border="1" cellpadding="5">
             <tr>
-              <td style="background:#fafafa; width:22%;"><strong>المسمى / القسم الحالي:</strong></td>
-              <td style="width:28%;">${emp.job || 'المسمى الحالي'}</td>
-              <td style="background:#fafafa; width:22%;"><strong>المسمى / القسم الجديد:</strong></td>
-              <td style="width:28%;"><strong>${item.extraType || 'المسمى المطلوب'}</strong></td>
+              <td style="background:#fafafa; width:22%;"><strong>نوع الإجازة:</strong></td>
+              <td style="width:28%;">[ ☑ سنوية ] [ ☐ اضطرارية ] [ ☐ مرضية ] [ ☐ زواج ] [ ☐ قطع إجازة ]</td>
+              <td style="background:#fafafa; width:22%;"><strong>مدة الإجازة:</strong></td>
+              <td style="width:28%;"><strong>( ......... ) يوم / أيام</strong></td>
             </tr>
             <tr>
-              <td style="background:#fafafa;"><strong>مبررات تغيير المسمى/القسم:</strong></td>
-              <td colspan="3">${item.bodyText || 'لحاجة الشؤون التعليمية وحصول الموظف على التأهيل اللازم.'}</td>
-            </tr>
-          </table>
-        </div>
-      `;
-    } else if (typeStr.includes('نقل')) {
-      actionTableHtml = `
-        <div style="margin-bottom:14px;">
-          <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات نقل الموظف / المعلم بين الوحدات</h4>
-          <table style="width:100%; border-collapse:collapse; font-size:0.85rem;" border="1" cellpadding="5">
-            <tr>
-              <td style="background:#fafafa; width:22%;"><strong>الوحدة المنقول منها:</strong></td>
-              <td style="width:28%;">${emp.unit || 'الوحدة الحالية'}</td>
-              <td style="background:#fafafa; width:22%;"><strong>الوحدة المنقول إليها:</strong></td>
-              <td style="width:28%;"><strong>${item.extraType || 'الوحدة الجديدة'}</strong></td>
-            </tr>
-            <tr>
-              <td style="background:#fafafa;"><strong>موافقة الوحدة المنقول منها:</strong></td>
-              <td>[ ☑ موافق ] [ ☐ غير موافق ]</td>
-              <td style="background:#fafafa;"><strong>تاريخ النقل الفعلي:</strong></td>
-              <td>${item.startDate || item.date}</td>
-            </tr>
-            <tr>
-              <td style="background:#fafafa;"><strong>مبررات وتوجيه النقل:</strong></td>
-              <td colspan="3">${item.bodyText || 'نظرًا لحاجة الوحدة الجديدة لخدمات المذكور أعلاه وللمصلحة العامة.'}</td>
-            </tr>
-          </table>
-        </div>
-      `;
-    } else if (typeStr.includes('إجازة') || typeStr.includes('مباشرة') || typeStr.includes('انقطاع')) {
-      actionTableHtml = `
-        <div style="margin-bottom:14px;">
-          <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات الإجازة والمباشرة والانقطاع</h4>
-          <table style="width:100%; border-collapse:collapse; font-size:0.85rem;" border="1" cellpadding="5">
-            <tr>
-              <td style="background:#fafafa; width:22%;"><strong>نوع الإجازة / الإجراء:</strong></td>
-              <td style="width:28%;"><strong>${item.extraType || 'اعتيادية / مرخص بها'}</strong></td>
-              <td style="background:#fafafa; width:22%;"><strong>مدة الإجازة (بالأيام):</strong></td>
-              <td style="width:28%;"><strong>${item.endDate ? 'محددة' : 'حسب النظام'}</strong></td>
-            </tr>
-            <tr>
-              <td style="background:#fafafa;"><strong>تاريخ بداية الإجازة/الانقطاع:</strong></td>
-              <td>${item.startDate || item.date}</td>
               <td style="background:#fafafa;"><strong>تاريخ المباشرة الفعلي:</strong></td>
-              <td>${item.endDate || item.date}</td>
+              <td colspan="3"><strong>${item.startDate || item.date}م</strong></td>
             </tr>
             <tr>
-              <td style="background:#fafafa;"><strong>ملاحظات المباشرة والإدارة:</strong></td>
-              <td colspan="3">${item.bodyText || 'تمت مباشرة العمل وإكمال الإجراءات النظامية المعتمدة.'}</td>
+              <td style="background:#fafafa;"><strong>اعتماد جهة عمل الموظف:</strong></td>
+              <td colspan="3">نأمل من فضيلتكم اعتماد مباشرة المذكور أعلاه من تاريخ قطعه لإجازته ومباشرته وإكمال اللازم.</td>
+            </tr>
+          </table>
+        </div>
+      `;
+    } else if (typeStr.includes('إجازة')) {
+      actionTableHtml = `
+        <div style="margin-bottom:14px;">
+          <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات طلب / منح الإجازة</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem;" border="1" cellpadding="5">
+            <tr>
+              <td style="background:#fafafa; width:22%;"><strong>نوع الإجازة المطلوبة:</strong></td>
+              <td style="width:28%;"><strong>${item.extraType || 'إجازة اعتيادية / زواج'}</strong></td>
+              <td style="background:#fafafa; width:22%;"><strong>فترة الإجازة:</strong></td>
+              <td style="width:28%;">من ${item.startDate || item.date} إلى ${item.endDate || '—'}</td>
+            </tr>
+            <tr>
+              <td style="background:#fafafa;"><strong>بيان الإجازة والسبب:</strong></td>
+              <td colspan="3">${item.bodyText || 'نأمل التكرم بالمرخص للمذكور أعلاه بالإجازة الموضحة أعلاه وفق اللوائح المعتمدة.'}</td>
             </tr>
           </table>
         </div>
@@ -1176,33 +1144,75 @@ function openPrintModal(item) {
           <h4 style="background:#fee2e2; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold; color:#991b1b;">بيانات المساءلة والإنذار الإداري</h4>
           <table style="width:100%; border-collapse:collapse; font-size:0.85rem;" border="1" cellpadding="5">
             <tr>
-              <td style="background:#fafafa; width:22%;"><strong>نوع الإشعار:</strong></td>
+              <td style="background:#fafafa; width:22%;"><strong>نوع الإشعار/المخالفة:</strong></td>
               <td style="width:28%;"><strong style="color:#991b1b;">${typeStr}</strong></td>
               <td style="background:#fafafa; width:22%;"><strong>تاريخ الملاحظة:</strong></td>
-              <td style="width:28%;">${item.startDate || item.date}</td>
+              <td style="width:28%;">${item.startDate || item.date}م</td>
             </tr>
             <tr>
-              <td style="background:#fafafa;"><strong>تفاصيل المخالفة / الملاحظة:</strong></td>
-              <td colspan="3">${item.bodyText || 'لاحظنا التغيّب أو التأخر عن وقت الدوام الرسمي بالحلقات ونلفت نظركم لضرورة الالتزام.'}</td>
+              <td style="background:#fafafa;"><strong>تفاصيل المخالفة / التأخير:</strong></td>
+              <td colspan="3">[ ☐ التأخير في الحضور ☐ ترك العمل أثناء الدوام ☐ الخروج المبكر ☐ الغياب عن العمل ]<br>${item.bodyText || 'لاحظنا التغيّب أو التأخر عن الدوام الرسمي ونلفت نظركم لضرورة الالتزام.'}</td>
+            </tr>
+            <tr>
+              <td style="background:#fafafa;"><strong>إفادة الموظف / المعلم:</strong></td>
+              <td colspan="3">...............................................................................................................................................</td>
+            </tr>
+            <tr>
+              <td style="background:#fafafa;"><strong>توصية رئيس الوحدة:</strong></td>
+              <td colspan="3">إفادة الموظف: [ ☐ مقبولة ☐ غير مقبولة ] | تكرار المخالفة: [ ☐ الأولى ☐ الثانية ☐ الثالثة ☐ الرابعة ]<br>الجزاء المقترح: [ ☐ تنبيه لفظي ☐ إنذار كتابي ☐ حسم من الراتب ]</td>
             </tr>
           </table>
         </div>
       `;
-    } else if (typeStr.includes('صرف مستحق') || typeStr.includes('انتداب') || typeStr.includes('الدوام المرن')) {
+    } else if (typeStr.includes('صرف مستحق')) {
       actionTableHtml = `
         <div style="margin-bottom:14px;">
-          <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات المستحقات / الانتداب / الدوام المرن</h4>
+          <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات صرف المستحق المالي</h4>
           <table style="width:100%; border-collapse:collapse; font-size:0.85rem;" border="1" cellpadding="5">
             <tr>
-              <td style="background:#fafafa; width:22%;"><strong>شهر الصرف / الجهة:</strong></td>
-              <td style="width:28%;"><strong>${item.extraType || 'شهر المباشرة'}</strong></td>
-              <td style="background:#fafafa; width:22%;"><strong>المبلغ / الساعات:</strong></td>
-              <td style="width:28%;"><strong>${item.subject || 'حسب المسيرات'}</strong></td>
+              <td style="background:#fafafa; width:22%;"><strong>الراتب الأساسي (ريال):</strong></td>
+              <td style="width:28%;">................... ريال</td>
+              <td style="background:#fafafa; width:22%;"><strong>المبلغ المطلوب (ريال):</strong></td>
+              <td style="width:28%;"><strong>${item.extraType || '................... ريال'}</strong></td>
             </tr>
             <tr>
-              <td style="background:#fafafa;"><strong>سبب الطلب / مبررات الانتداب:</strong></td>
-              <td colspan="3">${item.bodyText || 'صرف المستحقات المالية أو بدل الانتداب المقرر لحاجة العمل.'}</td>
+              <td style="background:#fafafa;"><strong>نوع وسبب الطلب:</strong></td>
+              <td colspan="3">صرف مستحق شهر ( ${item.subject || '................... 2026م'} ) لحاجة العمل الميداني.</td>
             </tr>
+          </table>
+        </div>
+      `;
+    } else if (typeStr.includes('انتداب')) {
+      actionTableHtml = `
+        <div style="margin-bottom:14px;">
+          <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">قرار وبيانات الانتداب</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem;" border="1" cellpadding="5">
+            <tr>
+              <td style="background:#fafafa; width:22%;"><strong>فترة الانتداب:</strong></td>
+              <td style="width:28%;">من ${item.startDate || item.date} إلى ${item.endDate || '—'}</td>
+              <td style="background:#fafafa; width:22%;"><strong>عدد أيام الانتداب:</strong></td>
+              <td style="width:28%;"><strong>( ......... ) يوم/أيام</strong></td>
+            </tr>
+            <tr>
+              <td style="background:#fafafa;"><strong>الغرض من الانتداب:</strong></td>
+              <td colspan="3">${item.bodyText || 'نظرًا لحاجة الوحدة لإنجاز المهمة الرسمية الموكلة بحرم المسجد الحرام.'}</td>
+            </tr>
+          </table>
+        </div>
+      `;
+    } else if (typeStr.includes('حضور') || typeStr.includes('كشف')) {
+      actionTableHtml = `
+        <div style="margin-bottom:14px;">
+          <h4 style="background:#f4f4f4; border:1px solid #000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">كشف الحضور والأنصراف الرسمي</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.8rem; text-align:center;" border="1" cellpadding="4">
+            <tr style="background:#fafafa;">
+              <th>اليوم</th><th>التاريخ</th><th>الفترة الصباحية (حضور)</th><th>الفترة الصباحية (انصراف)</th><th>الفترة المسائية (حضور)</th><th>الفترة المسائية (انصراف)</th><th>التوقيع</th>
+            </tr>
+            <tr><td>الأحد</td><td>01 / 01</td><td>:</td><td>:</td><td>:</td><td>:</td><td>..................</td></tr>
+            <tr><td>الإثنين</td><td>02 / 01</td><td>:</td><td>:</td><td>:</td><td>:</td><td>..................</td></tr>
+            <tr><td>الثلاثاء</td><td>03 / 01</td><td>:</td><td>:</td><td>:</td><td>:</td><td>..................</td></tr>
+            <tr><td>الأربعاء</td><td>04 / 01</td><td>:</td><td>:</td><td>:</td><td>:</td><td>..................</td></tr>
+            <tr><td>الخميس</td><td>05 / 01</td><td>:</td><td>:</td><td>:</td><td>:</td><td>..................</td></tr>
           </table>
         </div>
       `;
