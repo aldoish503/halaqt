@@ -351,6 +351,12 @@ function submitDefinedForm() {
     bodyText: document.getElementById('formEmpNotes').value
   };
 
+  // إذا كان النموذج إنهاء تكليف صادر من سحب أرشيف سابق
+  if (window._activeTerminatingArchiveIndex !== undefined && APP_DATA.archive[window._activeTerminatingArchiveIndex]) {
+    APP_DATA.archive[window._activeTerminatingArchiveIndex].status = 'تم إنهاء التكليف';
+    delete window._activeTerminatingArchiveIndex;
+  }
+
   APP_DATA.archive.unshift(archiveItem);
   saveData();
   sendToGoogleSheetWebhook('archive', archiveItem);
@@ -409,7 +415,12 @@ function renderArchiveTable() {
   filtered.forEach((r, idx) => {
     let badgeClass = 'badge-pending';
     if (r.status === 'مرفوض') badgeClass = 'badge-rejected';
-    if (r.status === 'تم التنفيذ') badgeClass = 'badge-done';
+    if (r.status === 'تم التنفيذ' || r.status === 'تم إنهاء التكليف') badgeClass = 'badge-done';
+
+    const isAssignment = (r.type || '').includes('تكليف') || (r.type || '').includes('تعيين') || (r.type || '').includes('فترة');
+    const terminateBtn = isAssignment && r.status !== 'تم إنهاء التكليف' 
+      ? `<button class="btn btn-warning btn-sm" onclick="terminateAssignmentFromArchive(${idx})" style="margin-left:4px;">🛑 طلب إنهاء تكليف</button>` 
+      : '';
 
     tbody.innerHTML += `
       <tr>
@@ -423,14 +434,66 @@ function renderArchiveTable() {
           <select class="btn-sm" onchange="changeArchiveStatus(${idx}, this.value)">
             <option value="قيد التنفيذ" ${r.status==='قيد التنفيذ'?'selected':''}>قيد التنفيذ</option>
             <option value="تم التنفيذ" ${r.status==='تم التنفيذ'?'selected':''}>تم التنفيذ</option>
+            <option value="تم إنهاء التكليف" ${r.status==='تم إنهاء التكليف'?'selected':''}>تم إنهاء التكليف</option>
             <option value="مرفوض" ${r.status==='مرفوض'?'selected':''}>مرفوض</option>
           </select>
         </td>
         <td>
+          ${terminateBtn}
           <button class="btn btn-outline btn-sm" onclick="openPrintModalByIndex(${idx})">👁️ معاينة وطباعة</button>
         </td>
       </tr>`;
   });
+}
+
+function terminateAssignmentFromArchive(index) {
+  const item = APP_DATA.archive[index];
+  if (!item) return;
+
+  // 1. الانتقال إلى تبويب المراسلات
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  const tabBtn = document.querySelector('[data-tab="correspondence"]');
+  if (tabBtn) tabBtn.classList.add('active');
+  const panel = document.getElementById('tab-correspondence');
+  if (panel) panel.classList.add('active');
+
+  showSection('formSelectSection');
+
+  // 2. اختيار نموذج إنهاء تكليف
+  const typeSelect = document.getElementById('definedFormTypeSelect');
+  if (typeSelect) {
+    typeSelect.value = 'إنهاء تكليف';
+    onFormTypeChange();
+  }
+
+  // 3. تعبئة بيانات الموظف
+  if (item.employeeId && item.employeeId !== 'مرشح جديد') {
+    const empSelect = document.getElementById('formEmpSelect');
+    if (empSelect) {
+      empSelect.value = item.employeeId;
+      onEmpSelectForForm();
+    }
+  }
+
+  // 4. تعبئة التواريخ والبيان
+  const startDateInput = document.getElementById('formStartDate');
+  if (startDateInput) startDateInput.value = item.startDate || item.date || '';
+
+  const endDateInput = document.getElementById('formEndDate');
+  if (endDateInput) endDateInput.value = new Date().toISOString().slice(0, 10);
+
+  const extraTypeInput = document.getElementById('formExtraType');
+  if (extraTypeInput) extraTypeInput.value = item.subject || item.type || 'إنهاء تكليف رسمي';
+
+  const notesInput = document.getElementById('formEmpNotes');
+  if (notesInput) {
+    notesInput.value = `إنهاء التكليف الصادر برقم (${item.outgoingNumber}) والمؤرخ في ${item.date}. المعني بالتكليف: ${item.employeeName || ''}.`;
+  }
+
+  window._activeTerminatingArchiveIndex = index;
+
+  showToast(`تم سحب بيانات التكليف (${item.outgoingNumber}) وتعبئتها تلقائياً في نموذج إنهاء التكليف!`);
 }
 
 function changeArchiveStatus(index, newStatus) {
