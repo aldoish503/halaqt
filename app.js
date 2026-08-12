@@ -1080,7 +1080,7 @@ function openPrintModal(item) {
     let actionTableHtml = '';
     const typeStr = item.type || '';
 
-    if (typeStr === '1. طلب تعيين (مرشح جديد)' || typeStr === 'طلب تعيين') {
+    if (typeStr.includes('تعيين') && !typeStr.includes('تمديد') && !typeStr.includes('دوام')) {
       actionTableHtml = `
         <div style="margin-bottom:14px;">
           <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات المرشح الجديد بالحلقات</h4>
@@ -1094,6 +1094,48 @@ function openPrintModal(item) {
             <tr>
               <td><strong>مبررات التعيين 1 و 2:</strong></td>
               <td colspan="3">${item.bodyText || d.r1 || 'حاجة الحلقة الشديدة لمعلم معتمد وتوفر المؤهل اللازم.'}</td>
+            </tr>
+          </table>
+        </div>
+      `;
+    } else if (typeStr.includes('تحويل فترة')) {
+      actionTableHtml = `
+        <div style="margin-bottom:14px;">
+          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات الفترات المحولة</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem; background:#ffffff; color:#000000;" border="1" cellpadding="5">
+            <tr>
+              <td style="width:22%;"><strong>الفترات المراد تحويلها:</strong></td>
+              <td style="width:28%;"><strong>${item.extraType || emp.period || 'الفترة الحالية'}</strong></td>
+              <td style="width:22%;"><strong>الفترة الجديدة:</strong></td>
+              <td style="width:28%;"><strong>${item.subject || 'الفترة الجديدة المطلوبة'}</strong></td>
+            </tr>
+            <tr>
+              <td><strong>التحويل إلى تاريخ:</strong></td>
+              <td>${item.endDate || 'حسب القرار'}</td>
+              <td><strong>المسمى الوظيفي:</strong></td>
+              <td>${emp.job || 'معلم / موظف'}</td>
+            </tr>
+            <tr>
+              <td><strong>مبررات التحويل (1 / 2 / 3 / 4):</strong></td>
+              <td colspan="3">${item.bodyText || '1/ حاجة العمل الميداني بالحلقات 2/ إعادة توزيع الفترات 3/ استكمال النصاب.'}</td>
+            </tr>
+          </table>
+        </div>
+      `;
+    } else if (typeStr.includes('اضافة فترة')) {
+      actionTableHtml = `
+        <div style="margin-bottom:14px;">
+          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات إضافة فترة</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem; background:#ffffff; color:#000000;" border="1" cellpadding="5">
+            <tr>
+              <td style="width:22%;"><strong>الفترة المضافة:</strong></td>
+              <td style="width:28%;"><strong>${item.extraType || 'الفترة المطلوبة'}</strong></td>
+              <td style="width:22%;"><strong>الوحدة / القسم:</strong></td>
+              <td style="width:28%;"><strong>${emp.section || 'حلقات القرآن الكريم'}</strong></td>
+            </tr>
+            <tr>
+              <td><strong>مبررات الإضافة:</strong></td>
+              <td colspan="3">${item.bodyText || 'لحاجة الحلقة الميدانية لإضافة فترة عمل جديدة والتغلب على الكثافة.'}</td>
             </tr>
           </table>
         </div>
