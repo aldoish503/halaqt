@@ -25,7 +25,38 @@ const DEFAULT_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzdp-uskKgV
 // البيانات الأولية (سجل فارغ ونظيف للبدء الفعلي)
 // ------------------------------------------------------------------
 const DEFAULT_EMPLOYEES = [];
-const DEFAULT_TEMPLATES = [];
+const DEFAULT_TEMPLATES = [
+  { id: 1, name: '1. طلب تعيين (مرشح جديد)', file: '1طلب تعيين.docx', category: 'التعيين والتكليف', desc: 'نموذج طلب تعيين مرشح جديد بالحلقات وتجزئة الهوية الرقمية', typeKey: 'طلب تعيين' },
+  { id: 2, name: '2. طلب تحويل فترة', file: '2تحويل فترة.docx', category: 'الفترات والمسميات', desc: 'نموذج طلب تحويل فترة العمل من صباحي إلى مسائي أو العكس', typeKey: 'تحويل فترة' },
+  { id: 3, name: '3. طلب تحويل فترة (مؤقتة)', file: '3طلب تحويل فترة (مؤقتة).docx', category: 'الفترات والمسميات', desc: 'نموذج طلب تحويل فترة العمل بشكل مؤقت محدد بوقت', typeKey: 'طلب تحويل فترة (مؤقتة)' },
+  { id: 4, name: '4. طلب إضافة فترة', file: '4طلب اضافة فترة.docx', category: 'الفترات والمسميات', desc: 'نموذج طلب إضافة فترة تكليف إضافية للموظف أو المعلم', typeKey: 'طلب اضافة فترة' },
+  { id: 5, name: '5. طلب إضافة فترة (مؤقتة)', file: '5طلب اضافة فترة (مؤقتة).docx', category: 'الفترات والمسميات', desc: 'نموذج طلب إضافة فترة إضافية بشكل مؤقت', typeKey: 'طلب اضافة فترة (مؤقتة)' },
+  { id: 6, name: '6. خطاب طلب نقل موظف/معلم', file: '6خطاب نقل موظف-معلم.docx', category: 'النقل والانتداب', desc: 'خطاب رسمي موجه لطلب نقل موظف أو معلم بين الوحدات', typeKey: 'خطاب نقل موظف-معلم' },
+  { id: 7, name: '7. طلب نقل موظف/معلم', file: '7طلب نقل.docx', category: 'النقل والانتداب', desc: 'نموذج طلب نقل موظف وتحديد الوحدة والفترة الجديدة', typeKey: 'طلب نقل' },
+  { id: 8, name: '8. طلب تغيير مسمى', file: '8طلب تغيير مسمى.docx', category: 'الفترات والمسميات', desc: 'نموذج طلب تغيير المسمى الوظيفي للموظف أو المعلم', typeKey: 'طلب تغيير مسمى' },
+  { id: 9, name: '9. طلب تغيير مسمى (مؤقت)', file: '9طلب تغيير مسمى (مؤقت).docx', category: 'الفترات والمسميات', desc: 'نموذج تغيير مسمى وظيفي لفترة مؤقتة', typeKey: 'طلب تغيير مسمى (مؤقت)' },
+  { id: 10, name: '10. طلب إلغاء فترة', file: '10طلب الغاء فترة.docx', category: 'الفترات والمسميات', desc: 'نموذج طلب إلغاء فترة من الفترات المسندة', typeKey: 'طلب الغاء فترة' },
+  { id: 11, name: '11. طلب إلغاء فترة مؤقتة', file: '11طلب الغاء فترة مؤقتة.docx', category: 'الفترات والمسميات', desc: 'نموذج إلغاء إضافة/تحويل فترة مؤقتة', typeKey: 'طلب الغاء فترة مؤقتة' },
+  { id: 12, name: '12. طلب إنهاء تكليف / عمل', file: '12طلب انهاء.docx', category: 'التعيين والتكليف', desc: 'نموذج طلب إنهاء تكليف موظف وتصفية المستحقات', typeKey: 'طلب انهاء' },
+  { id: 13, name: '13. طلب تكليف موظف/معلم', file: '13طلب تكليف.docx', category: 'التعيين والتكليف', desc: 'نموذج طلب إصدار تكليف جديد لموظف أو مجموعة', typeKey: 'طلب تكليف' },
+  { id: 14, name: '14. إنهاء تكليف موظف/معلم', file: '14انهاء تكليف.docx', category: 'التعيين والتكليف', desc: 'قرار ورسالة إنهاء تكليف رسمي مع التوجيه المالي', typeKey: 'إنهاء تكليف' },
+  { id: 15, name: '15. طلب تعيين الدوام المرن في الساعة', file: '15طلب تعيين الدوام المرن في الساعة.docx', category: 'التعيين والتكليف', desc: 'نموذج التعيين بنظام ساعات الدوام المرن', typeKey: 'طلب تعيين الدوام المرن في الساعة' },
+  { id: 16, name: '16. خطاب طلب تمديد تعيين (مؤقت)', file: '16خطاب طلب تمديد تعيين (مؤقت).docx', category: 'التعيين والتكليف', desc: 'خطاب طلب تمديد فترة التعيين المؤقت', typeKey: 'خطاب طلب تمديد تعيين (مؤقت)' },
+  { id: 17, name: '17. قرار تحويل قسم موظف-معلم', file: '17قرار تحويل قسم موظف-معلم.docx', category: 'التعيين والتكليف', desc: 'قرار تحويل موظف بين أقسام الشؤون التعليمية', typeKey: 'قرار تحويل قسم موظف-معلم' },
+  { id: 18, name: '18. مباشرة الموظف-المعلم بعد الإجازة', file: '18مباشرة الموظف-المعلم بعد الاجازة.docx', category: 'الإجازات والمباشرات', desc: 'إشعار رسمية بمباشرة العمل بعد الانتهاء من الإجازة', typeKey: 'مباشرة الموظف-المعلم بعد الاجازة' },
+  { id: 19, name: '19. طلب إجازة موظف-معلم', file: '19طلب اجازة موظف-معلم.docx', category: 'الإجازات والمباشرات', desc: 'نموذج طلب إجازة اعتيادية أو مرخص بها أو زواج', typeKey: 'طلب اجازة موظف-معلم' },
+  { id: 20, name: '20. طلب إلغاء إجازة موظف-معلم', file: '20طلب الغاء اجازة موظف -معلم.docx', category: 'الإجازات والمباشرات', desc: 'نموذج طلب إلغاء إجازة معتمدة للموظف', typeKey: 'طلب الغاء اجازة موظف -معلم' },
+  { id: 21, name: '21. مباشرة الموظف-المعلم بعد قطع الإجازة', file: '21مباشرة الموظف - المعلم بعد قطع الإجازة.docx', category: 'الإجازات والمباشرات', desc: 'إشعار مباشرة العمل في حالة قطع الإجازة مبكراً', typeKey: 'مباشرة الموظف - المعلم بعد قطع الإجازة' },
+  { id: 22, name: '22. مساءلة غياب للموظف/المعلم', file: '22مساءلة غياب للموظف المعلم.docx', category: 'المساءلات والمخالفات', desc: 'خطاب مساءلة رسمية عن أيام أو ساعات الغياب', typeKey: 'مساءلة غياب للموظف المعلم' },
+  { id: 23, name: '23. إشعار مخالفة موظف', file: '23مخالفة موظف.docx', category: 'المساءلات والمخالفات', desc: 'نموذج إشعار وتسجيل مخالفة إدارية على الموظف', typeKey: 'مخالفة موظف' },
+  { id: 24, name: '24. خطاب لفت نظر موظف', file: '24لفت نظر موظف.docx', category: 'المساءلات والمخالفات', desc: 'خطاب لفت نظر رسمي وتنبيه على الملاحظات', typeKey: 'لفت نظر موظف' },
+  { id: 25, name: '25. خطاب لوم موظف', file: '25لوم موظف.docx', category: 'المساءلات والمخالفات', desc: 'خطاب لوم رسمي بسبب تكرار الملاحظات أو الإنذارات', typeKey: 'لوم موظف' },
+  { id: 26, name: '26. الإبلاغ عن انقطاع موظف/معلم', file: '26الإبلاغ عن انقطاع موظف. معلم.docx', category: 'الإجازات والمباشرات', desc: 'نموذج الإبلاغ عن الانقطاع المفاجئ عن العمل', typeKey: 'الإبلاغ عن انقطاع موظف. معلم' },
+  { id: 27, name: '27. طلب صرف مستحق موظف-معلم', file: '27صرف مستحق موظف-معلم.docx', category: 'المستحقات والحضور', desc: 'نموذج طلب صرف المستحقات المالية للموظف أو المعلم', typeKey: 'صرف مستحق موظف-معلم' },
+  { id: 28, name: '28. قرار انتداب موظف/معلم', file: '28انتداب.docx', category: 'النقل والانتداب', desc: 'قرار انتداب رسمي لموظف لحاجة العمل', typeKey: 'انتداب' },
+  { id: 29, name: '29. كشف الحضور والإنصراف الخاص بالتكليف', file: '29كشف الحضور والإنصراف الخاص بالتكليف.docx', category: 'المستحقات والحضور', desc: 'كشف متابعة وتوقيع الحضور والانصراف للتكليفات', typeKey: 'كشف الحضور والإنصراف الخاص بالتكليف' },
+  { id: 30, name: '30. كشف حضور وانصراف الموظفين النهائي', file: '30كشف الحضور والإنصراف.docx', category: 'المستحقات والحضور', desc: 'سجل وكشف الحضور والانصراف النهائي لجميع الموظفين', typeKey: 'كشف الحضور والإنصراف' }
+];
 const DEFAULT_TASKS = [];
 const DEFAULT_MEETINGS = [];
 const DEFAULT_ARCHIVE = [];
@@ -695,18 +726,67 @@ function exportEmployeesCSV() {
 function renderTemplatesTable() {
   const tbody = document.getElementById('templatesTableBody');
   if (!tbody) return;
-  tbody.innerHTML = APP_DATA.templates.length ? '' : '<tr><td colspan="5" style="text-align:center;">لا توجد قوالب مضافة</td></tr>';
 
-  APP_DATA.templates.forEach((t, i) => {
+  const tpls = APP_DATA.templates.length ? APP_DATA.templates : DEFAULT_TEMPLATES;
+  tbody.innerHTML = '';
+
+  tpls.forEach((t, i) => {
+    const docUrl = t.file ? `templates/${encodeURIComponent(t.file)}` : (t.fileUrl || '#');
+    const typeKey = t.typeKey || t.name;
+
     tbody.innerHTML += `
       <tr>
         <td><strong>${t.name}</strong></td>
-        <td>${t.description || '—'}</td>
-        <td>${t.date || '—'}</td>
-        <td><a href="${t.fileUrl || '#'}" target="_blank" class="btn btn-outline btn-sm">رابط المستند</a></td>
+        <td><span class="badge badge-normal">${t.category || 'نموذج إداري'}</span></td>
+        <td>${t.desc || t.description || 'نموذج رسمى معتمد'}</td>
+        <td>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="btn btn-primary btn-sm" onclick="useTemplateToIssueForm('${typeKey}')">✏️ إصدار وتعبئة</button>
+            <button class="btn btn-outline btn-sm" onclick="previewBlankTemplateModal('${typeKey}', '${t.name}')">👁️ معاينة للطباعة</button>
+            <a href="${docUrl}" download class="btn btn-outline btn-sm">📥 تحميل (.docx)</a>
+          </div>
+        </td>
         <td><button class="btn btn-danger btn-sm" onclick="removeTemplate(${i})">حذف</button></td>
       </tr>`;
   });
+}
+
+function useTemplateToIssueForm(typeKey) {
+  // الانتقال لتبويب المراسلات
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  const tabBtn = document.querySelector('[data-tab="correspondence"]');
+  if (tabBtn) tabBtn.classList.add('active');
+  const panel = document.getElementById('tab-correspondence');
+  if (panel) panel.classList.add('active');
+
+  showSection('formSelectSection');
+
+  const typeSelect = document.getElementById('definedFormTypeSelect');
+  if (typeSelect) {
+    typeSelect.value = typeKey;
+    onFormTypeChange();
+  }
+
+  showToast(`تم فتح النموذج الرسمى: ${typeKey}`);
+}
+
+function previewBlankTemplateModal(typeKey, name) {
+  const outgoing = generateNextOutgoingNumber();
+  const dummyItem = {
+    outgoingNumber: outgoing.fullHeader,
+    date: new Date().toLocaleDateString('ar-SA'),
+    type: typeKey,
+    subject: name,
+    employeeName: '[ اسم الموظف / المعلم ]',
+    employeeId: '000XXXX',
+    startDate: '1447/01/01هـ',
+    endDate: '1447/12/30هـ',
+    extraType: name,
+    status: 'معاينة قالب',
+    bodyText: 'هذه معاينة للقالب المعتمد برقم صادر رسمي جاهز للتعبئة والطباعة المباشرة.'
+  };
+  openPrintModal(dummyItem);
 }
 
 function openTemplateModal() {
