@@ -870,6 +870,39 @@ function parseCSVAndImport(csvText, isQuiet = false) {
     return -1;
   };
 
+  const isTasksSheet = findIndex('العنوان', 'المهمة', 'المسند') !== -1 && findIndex('الحالة', 'الاستحقاق') !== -1;
+
+  if (isTasksSheet) {
+    const titleIdx = findIndex('العنوان', 'المهمة', 'title');
+    const assigneeIdx = findIndex('المسند', 'المسند_إليه', 'الأولوية');
+    const priorityIdx = findIndex('الأولوية', 'priority');
+    const dueIdx = findIndex('تاريخ_الاستحقاق', 'الاستحقاق', 'due');
+    const statusIdx = findIndex('الحالة', 'status');
+
+    const importedTasks = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g, '').trim());
+      if (cols.join('').trim() === '') continue;
+
+      if (cols[0] || cols[1]) {
+        importedTasks.push({
+          title: (titleIdx !== -1 && cols[titleIdx]) ? cols[titleIdx] : cols[0],
+          assignedTo: (assigneeIdx !== -1 && cols[assigneeIdx]) ? cols[assigneeIdx] : (cols[1] || 'مكتب رئيس الوحدة'),
+          priority: (priorityIdx !== -1 && cols[priorityIdx]) ? cols[priorityIdx] : 'مهمة غير عاجلة',
+          dueDate: (dueIdx !== -1 && cols[dueIdx]) ? cols[dueIdx] : (cols[2] || ''),
+          status: (statusIdx !== -1 && cols[statusIdx]) ? cols[statusIdx] : (cols[3] || 'قيد التنفيذ')
+        });
+      }
+    }
+
+    if (importedTasks.length) {
+      APP_DATA.tasks = importedTasks;
+      saveData();
+      if (!isQuiet) showToast(`تم جلب وتحديث ${importedTasks.length} مهمة من Google Sheet بنجاح`);
+    }
+    return;
+  }
+
   const nameIdx = findIndex('اسم', 'الاسم', 'الموظف', 'name');
   const idIdx = findIndex('الرقم الوظيفي', 'الرقم_الوظيفي', 'id');
   const nidIdx = findIndex('هوية', 'الهوية', 'national');
