@@ -19,6 +19,7 @@ const STORAGE_KEYS = {
 // إعدادات الشيت الخاص بالمستند المعين
 // ------------------------------------------------------------------
 const DEFAULT_GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1WL7CWYfAFcYcyHVNXOSCYhpBUI_QfeY_fLIcMgJUfkc/gviz/tq?tqx=out:csv&gid=1526450297';
+const DEFAULT_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzdp-uskKgV_V58jwyuF46e182lYTyz8Qco-Ek0mihI-Em3ZYdvdDrcn38sQEr9PMZa/exec';
 
 // ------------------------------------------------------------------
 // البيانات الأولية (سجل فارغ ونظيف للبدء الفعلي)
@@ -143,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (urlInput) urlInput.value = APP_DATA.sheetUrl;
 
   const webhookInput = document.getElementById('sheetWebhookInput');
-  if (webhookInput) webhookInput.value = localStorage.getItem('AGY_UNIT_WEBHOOK_URL') || '';
+  if (webhookInput) webhookInput.value = localStorage.getItem('AGY_UNIT_WEBHOOK_URL') || DEFAULT_WEBHOOK_URL;
 
   renderAllViews();
 
@@ -219,7 +220,7 @@ function renderCandNidBoxes() {
 }
 
 function sendToGoogleSheetWebhook(action, payload) {
-  const webhookUrl = localStorage.getItem('AGY_UNIT_WEBHOOK_URL');
+  const webhookUrl = localStorage.getItem('AGY_UNIT_WEBHOOK_URL') || DEFAULT_WEBHOOK_URL;
   if (!webhookUrl) return;
 
   try {
