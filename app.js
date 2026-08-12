@@ -21,31 +21,13 @@ const STORAGE_KEYS = {
 const DEFAULT_GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1WL7CWYfAFcYcyHVNXOSCYhpBUI_QfeY_fLIcMgJUfkc/gviz/tq?tqx=out:csv&gid=1526450297';
 
 // ------------------------------------------------------------------
-// البيانات الأولية للتجربة السريعة (Initial Demo Data Seeding)
+// البيانات الأولية (سجل فارغ ونظيف للبدء الفعلي)
 // ------------------------------------------------------------------
-const DEFAULT_EMPLOYEES = [
-  { id: '1001', name: 'أحمد بن عبد الله الصالح', nationalId: '1089234567', nationality: 'سعودي', job: 'معلم قرآن كريم', period: 'المغرب والعشاء', unit: 'حلقات القرآن الكريم', section: 'الفرع الأول', phone: '0501234567', age: '34', task: 'تدريس الحلقة النموذجية', note: 'ممتاز' },
-  { id: '1002', name: 'محمد بن إبراهيم الحسين', nationalId: '1098765432', nationality: 'سعودي', job: 'مشرف تعليمي', period: 'العصر', unit: 'حلقات القرآن الكريم', section: 'الفرع الثاني', phone: '0559876543', age: '40', task: 'الإشراف على الحلقات', note: '' },
-  { id: '1003', name: 'خالد بن عبدالرحمن الغامدي', nationalId: '1076543210', nationality: 'سعودي', job: 'معلم متون علمية', period: 'الفجر', unit: 'حلقات القرآن الكريم', section: 'قسم المتون', phone: '0543210987', age: '38', task: 'شرح منظومة الجزرية', note: '' }
-];
-
-const DEFAULT_TEMPLATES = [
-  { name: 'نموذج طلب تعيين مرشح', description: 'اعتماد وتعيين مدرس جديد بالحلقات', date: '2026/01/15', fileUrl: '#' },
-  { name: 'نموذج طلب تحويل فترة', description: 'تغيير فترة التكليف الحالية', date: '2026/02/01', fileUrl: '#' }
-];
-
-const DEFAULT_TASKS = [
-  { title: 'إعداد تقرير الحلقات الإحصائي الشهرية', assignedTo: 'مكتب رئيس الوحدة', priority: 'مهمة عاجلة', dueDate: '2026-08-20', status: 'قيد التنفيذ' },
-  { title: 'مراجعة طلبات التعيين الجديدة', assignedTo: 'الشؤون التعليمية', priority: 'مهمة غير عاجلة', dueDate: '2026-08-25', status: 'قيد التنفيذ' }
-];
-
-const DEFAULT_MEETINGS = [
-  { title: 'اجتماع المشرفين التعليميين الدوري', date: '2026-08-15', time: '10:00', location: 'قاعة الاجتماعات الرئيسية', notes: 'مناقشة خطة الفصل الدراسي' }
-];
-
-const DEFAULT_ARCHIVE = [
-  { outgoingNumber: 'ت / 000001 / 26', date: '2026/08/10', type: 'طلب تعيين', subject: 'طلب تعيين - عبد الرحمن بن سعيد', employeeName: 'عبد الرحمن بن سعيد', employeeId: 'مرشح جديد', status: 'قيد التنفيذ', bodyText: 'طلب تعيين مرشح في حلقات المغرب' }
-];
+const DEFAULT_EMPLOYEES = [];
+const DEFAULT_TEMPLATES = [];
+const DEFAULT_TASKS = [];
+const DEFAULT_MEETINGS = [];
+const DEFAULT_ARCHIVE = [];
 
 // ------------------------------------------------------------------
 // إدارة التخزين المحلي (Local Storage Helper)
@@ -67,15 +49,46 @@ function setStorage(key, value) {
   }
 }
 
+function resetAllSystemData() {
+  localStorage.removeItem(STORAGE_KEYS.EMPLOYEES);
+  localStorage.removeItem(STORAGE_KEYS.TEMPLATES);
+  localStorage.removeItem(STORAGE_KEYS.TASKS);
+  localStorage.removeItem(STORAGE_KEYS.MEETINGS);
+  localStorage.removeItem(STORAGE_KEYS.ARCHIVE);
+  localStorage.removeItem(STORAGE_KEYS.COUNTERS);
+  
+  APP_DATA.employees = [];
+  APP_DATA.templates = [];
+  APP_DATA.tasks = [];
+  APP_DATA.meetings = [];
+  APP_DATA.archive = [];
+  APP_DATA.counter = { year: new Date().getFullYear(), lastNumber: 0 };
+  
+  saveData();
+  showToast('تم مسح وتصفير كافة بيانات النظام بنجاح للبدء من جديد!');
+}
+
 let APP_DATA = {
-  employees: getStorage(STORAGE_KEYS.EMPLOYEES, DEFAULT_EMPLOYEES),
-  templates: getStorage(STORAGE_KEYS.TEMPLATES, DEFAULT_TEMPLATES),
-  tasks: getStorage(STORAGE_KEYS.TASKS, DEFAULT_TASKS),
-  meetings: getStorage(STORAGE_KEYS.MEETINGS, DEFAULT_MEETINGS),
-  archive: getStorage(STORAGE_KEYS.ARCHIVE, DEFAULT_ARCHIVE),
-  counter: getStorage(STORAGE_KEYS.COUNTERS, { year: 2026, lastNumber: 1 }),
+  employees: getStorage(STORAGE_KEYS.EMPLOYEES, []),
+  templates: getStorage(STORAGE_KEYS.TEMPLATES, []),
+  tasks: getStorage(STORAGE_KEYS.TASKS, []),
+  meetings: getStorage(STORAGE_KEYS.MEETINGS, []),
+  archive: getStorage(STORAGE_KEYS.ARCHIVE, []),
+  counter: getStorage(STORAGE_KEYS.COUNTERS, { year: new Date().getFullYear(), lastNumber: 0 }),
   sheetUrl: localStorage.getItem(STORAGE_KEYS.GOOGLE_SHEET_URL) || DEFAULT_GOOGLE_SHEET_URL
 };
+
+// تصفير آلي عند تحديث هذه النسخة لتطهير البيانات التجريبية السابقة
+if (localStorage.getItem('AGY_CLEARED_V1') !== 'TRUE') {
+  localStorage.clear();
+  localStorage.setItem('AGY_CLEARED_V1', 'TRUE');
+  APP_DATA.employees = [];
+  APP_DATA.templates = [];
+  APP_DATA.tasks = [];
+  APP_DATA.meetings = [];
+  APP_DATA.archive = [];
+  APP_DATA.counter = { year: new Date().getFullYear(), lastNumber: 0 };
+}
 
 function saveData() {
   setStorage(STORAGE_KEYS.EMPLOYEES, APP_DATA.employees);

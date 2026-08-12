@@ -630,8 +630,9 @@
       </div>
 
       <div class="btn-row">
-        <button class="btn btn-primary" onclick="syncFromGoogleSheet()">🔄 جلب الموظفين من الرابط</button>
+        <button class="btn btn-primary" onclick="syncFromGoogleSheet()">🔄 جلب البيانات من الرابط</button>
         <button class="btn btn-gold" onclick="document.getElementById('fileCsvImport').click()">📁 استيراد ملف CSV/Excel محلي</button>
+        <button class="btn btn-danger" onclick="if(confirm('هل انت متأكد من مسح وتفريغ كافة السجلات للبدء من جديد؟')){resetAllSystemData();closeSyncModal();}">🧹 تصفير وإعادة ضبط النظام</button>
         <input type="file" id="fileCsvImport" accept=".csv" class="hidden" onchange="importLocalCSV(event)">
       </div>
     </div>
