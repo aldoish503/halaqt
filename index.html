@@ -17,7 +17,7 @@
 
     <div class="header-title">
       <h1>نظام إدارة مكتب رئيس وحدة الشؤون التعليمية</h1>
-      <p class="header-subtitle">حلقات القرآن الكريم بالمسجد النبوي الشريف</p>
+      <p class="header-subtitle">الشؤون التعليمية (قران) بالمسجد النبوي الشريف</p>
     </div>
 
     <div class="header-emblem">
@@ -42,6 +42,9 @@
       </button>
       <button class="tab-btn" data-tab="secretariat">
         <span>📅</span> الأعمال والتقويم
+      </button>
+      <button class="tab-btn" data-tab="emp-requests">
+        <span>📩</span> طلبات الموظفين
       </button>
       <button class="tab-btn" onclick="openSyncModal()" style="margin-right: auto; color: var(--gold-600);">
         <span>📊</span> ربط / استيراد Google Sheets
@@ -90,12 +93,12 @@
         <label>نوع النموذج المطلوب إصداره (30 نموذجاً معتمداً من دليل الموارد) *</label>
         <select id="definedFormTypeSelect" onchange="onFormTypeChange()">
           <option value="">-- اختر النموذج الإداري المعتمد --</option>
-          <optgroup label="📋 التعيين والتكليف والحلقات">
+          <optgroup label="📋 التعيين والتكليف والدوام">
             <option value="طلب تعيين">1. طلب تعيين (مرشح جديد بالحلقات)</option>
             <option value="طلب تكليف">13. طلب تكليف موظف / معلم</option>
             <option value="إنهاء تكليف">14. إنهاء تكليف موظف / معلم</option>
             <option value="طلب انهاء">12. طلب إنهاء تكليف / عمل</option>
-            <option value="طلب تعيين الدوام المرن في الساعة">15. طلب تعيين الدوام المرن في الساعة</option>
+            <option value="طلب تعيين الدوام المرن في الساعة">15. طلب تعيين الدوام المرن بالساعة</option>
             <option value="خطاب طلب تمديد تعيين (مؤقت)">16. خطاب طلب تمديد تعيين (مؤقت)</option>
             <option value="قرار تحويل قسم موظف-معلم">17. قرار تحويل قسم موظف - معلم</option>
           </optgroup>
@@ -107,8 +110,8 @@
             <option value="طلب اضافة فترة (مؤقتة)">5. طلب إضافة فترة (مؤقتة)</option>
             <option value="طلب الغاء فترة">10. طلب إلغاء فترة</option>
             <option value="طلب الغاء فترة مؤقتة">11. طلب إلغاء فترة مؤقتة</option>
-            <option value="طلب تغيير مسمى">8. طلب تغيير مسمى</option>
-            <option value="طلب تغيير مسمى (مؤقت)">9. طلب تغيير مسمى (مؤقت)</option>
+            <option value="طلب تغيير مسمى">8. طلب تغيير مسمى وظيفي</option>
+            <option value="طلب تغيير مسمى (مؤقت)">9. طلب تغيير مسمى وظيفي (مؤقت)</option>
           </optgroup>
 
           <optgroup label="🚚 النقل والانتداب والعهد والتقنية">
@@ -181,7 +184,7 @@
             </div>
             <div class="field-group">
               <label>الوحدة</label>
-              <input type="text" id="cand_unit" value="حلقات القرآن الكريم">
+              <input type="text" id="cand_unit" value="الشؤون التعليمية (قران)">
             </div>
             <div class="field-group">
               <label>الشعبة / القسم</label>
@@ -253,17 +256,17 @@
             </div>
           </div>
 
-          <div id="formEmpPreview" class="card hidden" style="background:var(--gold-100); margin-top:12px;">
-            <p><strong>الاسم:</strong> <span id="f-name"></span> | <strong>الرقم الوظيفي:</strong> <span id="f-id"></span> | <strong>الهوية:</strong> <span id="f-nid"></span></p>
-            <p><strong>المسمى الحالي:</strong> <span id="f-job"></span> | <strong>الوحدة:</strong> <span id="f-unit"></span> | <strong>القسم:</strong> <span id="f-sec"></span></p>
-            <label style="margin-top:6px;">تجزئة الهوية الرقمية:</label>
+          <div id="formEmpPreview" class="card hidden" style="background:var(--gold-100); margin-top:12px; font-size:0.9rem; border:1px solid var(--gold-400);">
+            <p><strong>الاسم:</strong> <span id="f-name"></span> | <strong>الرقم الوظيفي:</strong> <span id="f-id"></span> | <strong>الهوية:</strong> <span id="f-nid"></span> | <strong>الجنسية:</strong> <span id="f-nationality"></span></p>
+            <p><strong>المسمى الوظيفي:</strong> <span id="f-job"></span> | <strong>الوحدة:</strong> <span id="f-unit"></span> | <strong>القسم/الشعبة:</strong> <span id="f-sec"></span> | <strong>الفترات:</strong> <span id="f-period"></span> | <strong>الجوال:</strong> <span id="f-phone"></span></p>
+            <label style="margin-top:6px; font-weight:bold;">تجزئة الهوية الرقمية (من اليسار إلى اليمين):</label>
             <div id="f-id-boxes" class="id-boxes-container"></div>
           </div>
 
-          <!-- الحقول الديناميكية الخاصة بكل نموذج -->
+          <!-- الحقول العامة للدعم والتاريخ -->
           <div id="dynamicFormFields" class="field-row" style="margin-top:14px;">
             <div class="field-group">
-              <label>تاريخ البداية / تاريخ المباشرة / العهدة</label>
+              <label>تاريخ البداية / تاريخ المباشرة / التكليف *</label>
               <input type="date" id="formStartDate">
             </div>
             <div class="field-group">
@@ -271,14 +274,191 @@
               <input type="date" id="formEndDate">
             </div>
             <div class="field-group">
-              <label>البيان / النوع / تفاصيل الصلاحية</label>
-              <input type="text" id="formExtraType" placeholder="مثال: إجازة زواج / حاسب dell / صلاحية وقار">
+              <label>البيان / النوع الفرعي</label>
+              <input type="text" id="formExtraType" placeholder="مثال: رسمية / مؤقتة / زواج">
+            </div>
+          </div>
+
+          <!-- 1. حقول التكليف وإنهاء التكليف وتكليف الدوام (نموذج 13, 14, 29) -->
+          <div id="section_assignment_fields" class="form-custom-group hidden" style="border:1px solid var(--gold-400); padding:12px; border-radius:8px; margin-top:12px; background:#faf8f2;">
+            <h4 style="color:var(--primary-800); margin-bottom:8px;">تفاصيل التكليف والمهام</h4>
+            <div class="field-row">
+              <div class="field-group">
+                <label>مسمى التكليف *</label>
+                <input type="text" id="assign_job_title" placeholder="مثال: مشرف ميداني / معلم حلقات">
+              </div>
+              <div class="field-group">
+                <label>فترات التكليف</label>
+                <input type="text" id="assign_periods" placeholder="الفجر / العصر / المغرب">
+              </div>
+              <div class="field-group">
+                <label>عدد الأيام</label>
+                <input type="number" id="assign_days" placeholder="عدد الأيام">
+              </div>
+              <div class="field-group">
+                <label>عدد الساعات اليومية</label>
+                <input type="number" id="assign_hours" placeholder="عدد الساعات">
+              </div>
+            </div>
+            <div class="field-group" style="margin-top:8px;">
+              <label>المهام التفصيلية خلال التكليف (مهام 1 - 4)</label>
+              <textarea id="assign_tasks" placeholder="1/ متابعة سير الحلقات&#10;2/ إعداد التقارير اليومية&#10;3/ الإشراف على الدوام&#10;4/ حصر الغياب"></textarea>
+            </div>
+          </div>
+
+          <!-- 2. حقول الدوام المرن بالساعة (نموذج 15) -->
+          <div id="section_flexible_hours_fields" class="form-custom-group hidden" style="border:1px solid var(--gold-400); padding:12px; border-radius:8px; margin-top:12px; background:#faf8f2;">
+            <h4 style="color:var(--primary-800); margin-bottom:8px;">تفاصيل تعيين الدوام المرن بالساعة</h4>
+            <label>فترات وساعات العمل المطلوب:</label>
+            <div class="checkbox-group" style="margin-bottom:10px;">
+              <label class="checkbox-label"><input type="checkbox" class="flex_p" value="الفجر ساعتان"> الفجر (ساعتان)</label>
+              <label class="checkbox-label"><input type="checkbox" class="flex_p" value="الضحى ثلاث ساعات"> الضحى (3 ساعات)</label>
+              <label class="checkbox-label"><input type="checkbox" class="flex_p" value="الظهر ساعتان"> الظهر (ساعتان)</label>
+              <label class="checkbox-label"><input type="checkbox" class="flex_p" value="العصر ثلاث ساعات"> العصر (3 ساعات)</label>
+              <label class="checkbox-label"><input type="checkbox" class="flex_p" value="المغرب ساعة"> المغرب (ساعة)</label>
+              <label class="checkbox-label"><input type="checkbox" class="flex_p" value="العشاء ساعتان"> العشاء (ساعتان)</label>
+              <label class="checkbox-label"><input type="checkbox" class="flex_p" value="الصباحية (أربع ساعات)"> الصباحية (4 ساعات)</label>
+              <label class="checkbox-label"><input type="checkbox" class="flex_p" value="المسائية (أربع ساعات)"> المسائية (4 ساعات)</label>
+            </div>
+            <div class="field-row">
+              <div class="field-group">
+                <label>إجمالي الساعات باليوم</label>
+                <input type="number" id="flex_hours_day" placeholder="مثل: 4">
+              </div>
+              <div class="field-group">
+                <label>إجمالي عدد الأيام</label>
+                <input type="number" id="flex_total_days" placeholder="مثل: 22">
+              </div>
+              <div class="field-group">
+                <label>إجمالي الساعات بالشهر</label>
+                <input type="number" id="flex_hours_month" placeholder="مثل: 88">
+              </div>
+            </div>
+            <div class="field-group" style="margin-top:8px;">
+              <label>مبررات التعيين والمهام المتوقعة</label>
+              <textarea id="flex_reasons_tasks" placeholder="أدخل مبررات التعيين والمهام المتوقعة..."></textarea>
+            </div>
+          </div>
+
+          <!-- 3. حقول الانتداب الرسمية (نموذج 28) -->
+          <div id="section_mandate_fields" class="form-custom-group hidden" style="border:1px solid var(--gold-400); padding:12px; border-radius:8px; margin-top:12px; background:#faf8f2;">
+            <h4 style="color:var(--primary-800); margin-bottom:8px;">تفاصيل قرار الانتداب</h4>
+            <div class="field-row">
+              <div class="field-group">
+                <label>مدينة الانتداب *</label>
+                <input type="text" id="mandate_city" placeholder="مثال: مكة المكرمة / الرياض">
+              </div>
+              <div class="field-group">
+                <label>عدد أيام الانتداب</label>
+                <input type="number" id="mandate_days" placeholder="عدد الأيام">
+              </div>
+              <div class="field-group">
+                <label>نوع النقل</label>
+                <input type="text" id="mandate_transport" placeholder="سيارة رسمية / طيران / حافلة">
+              </div>
+              <div class="field-group">
+                <label>نوع السكن</label>
+                <input type="text" id="mandate_housing" placeholder="تأمين سكن / بدل سكن">
+              </div>
+            </div>
+            <div class="field-group" style="margin-top:8px;">
+              <label>أهداف ومهام الانتداب (أهداف 1 - 5)</label>
+              <textarea id="mandate_goals" placeholder="1/ إنجاز المهمة الرسمية بالحرم المكي&#10;2/ متابعة التنسيق الميداني"></textarea>
+            </div>
+          </div>
+
+          <!-- 4. حقول الإجازات والمباشرات (نموذج 18, 19, 20, 21) -->
+          <div id="section_leave_fields" class="form-custom-group hidden" style="border:1px solid var(--gold-400); padding:12px; border-radius:8px; margin-top:12px; background:#faf8f2;">
+            <h4 style="color:var(--primary-800); margin-bottom:8px;">تفاصيل الإجازة والمباشرة</h4>
+            <div class="field-row">
+              <div class="field-group">
+                <label>نوع الإجازة *</label>
+                <select id="leave_type_select">
+                  <option value="سنوية">إجازة سنوية</option>
+                  <option value="اضطرارية">إجازة اضطرارية</option>
+                  <option value="استثنائية">إجازة استثنائية</option>
+                  <option value="مرضية">إجازة مرضية</option>
+                  <option value="وفاة">إجازة وفاة</option>
+                  <option value="زواج">إجازة زواج</option>
+                  <option value="أبوة">إجازة أبوة</option>
+                  <option value="اختبار">إجازة اختبار</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label>مدة الإجازة (بالأيام)</label>
+                <input type="number" id="leave_duration_days" placeholder="عدد الأيام">
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. حقول المساءلات والمخالفات ولفت النظر واللوم (نموذج 22, 23, 24, 25) -->
+          <div id="section_disciplinary_fields" class="form-custom-group hidden" style="border:1px solid var(--gold-400); padding:12px; border-radius:8px; margin-top:12px; background:#faf8f2;">
+            <h4 style="color:var(--primary-800); margin-bottom:8px;">تفاصيل المخالفة والإنذار والمساءلة</h4>
+            <div class="field-row">
+              <div class="field-group">
+                <label>نوع المخالفة / الملاحظة</label>
+                <input type="text" id="disc_type" placeholder="تأخير / خروج مبكر / غياب عن العمل / تقصير">
+              </div>
+              <div class="field-group">
+                <label>تاريخ اللوم/الإنذار السابق (إن وجد)</label>
+                <input type="date" id="disc_prev_date">
+              </div>
+            </div>
+            <div class="field-group" style="margin-top:8px;">
+              <label>تفاصيل المخالفة / الملاحظة الإدارية</label>
+              <textarea id="disc_details" placeholder="أدخل تفاصيل التغيب أو التأخر أو المخالفة المرصودة..."></textarea>
+            </div>
+            <div class="field-group" style="margin-top:8px;">
+              <label>إفادة الموظف / المعلم (عن أسباب المخالفة)</label>
+              <textarea id="disc_emp_statement" placeholder="إفادة الموظف الكتابية..."></textarea>
+            </div>
+          </div>
+
+          <!-- 6. حقول صرف المستحقات المالية (نموذج 27) -->
+          <div id="section_financial_fields" class="form-custom-group hidden" style="border:1px solid var(--gold-400); padding:12px; border-radius:8px; margin-top:12px; background:#faf8f2;">
+            <h4 style="color:var(--primary-800); margin-bottom:8px;">تفاصيل الطلب المستحق المالي</h4>
+            <div class="field-row">
+              <div class="field-group">
+                <label>الراتب الأساسي (ريال)</label>
+                <input type="number" id="fin_basic_salary" placeholder="مثل: 4000">
+              </div>
+              <div class="field-group">
+                <label>المبلغ المطلوب صرفه (ريال) *</label>
+                <input type="number" id="fin_requested_amount" placeholder="مثل: 1500">
+              </div>
+              <div class="field-group">
+                <label>مستحق شهر / فترة</label>
+                <input type="text" id="fin_claim_month" placeholder="مثال: شهر صفر 1447هـ">
+              </div>
+            </div>
+          </div>
+
+          <!-- 7. حقول تغيير المسمى والنقل وتحويل الفترات (نماذج 2-11) -->
+          <div id="section_transfer_title_fields" class="form-custom-group hidden" style="border:1px solid var(--gold-400); padding:12px; border-radius:8px; margin-top:12px; background:#faf8f2;">
+            <h4 style="color:var(--primary-800); margin-bottom:8px;">تفاصيل الفترة الجديدة / المسمى / القسم الجديد</h4>
+            <div class="field-row">
+              <div class="field-group">
+                <label>الفترة الجديد / المراد تحويلها/إضافتها/إلغاؤها</label>
+                <input type="text" id="target_period_val" placeholder="مثال: الفترة المسائية / المغرب">
+              </div>
+              <div class="field-group">
+                <label>المسمى الوظيفي الجديد</label>
+                <input type="text" id="target_job_title_val" placeholder="مثال: مشرف حلقات / معلم معتمد">
+              </div>
+              <div class="field-group">
+                <label>الشعبة / القسم الجديد / الوحدة المنقول إليها</label>
+                <input type="text" id="target_section_val" placeholder="اسم الشعبة أو الوحدة الجديدة">
+              </div>
+            </div>
+            <div class="field-group" style="margin-top:8px;">
+              <label>مبررات الإجراء (مبررات 1 - 4)</label>
+              <textarea id="procedure_reasons" placeholder="1/ مصلحة العمل بالحلقات&#10;2/ استكمال النصاب"></textarea>
             </div>
           </div>
 
           <div class="field-group" style="margin-top:10px;">
-            <label>مبررات / ملاحظات الإجراء الإداري</label>
-            <textarea id="formEmpNotes" placeholder="أدخل الملاحظات والتوجيهات الخاصة بالنموذج..."></textarea>
+            <label>ملاحظات وتوجيهات إضافية</label>
+            <textarea id="formEmpNotes" placeholder="أدخل أية ملاحظات إضافية تود إرفاقها بالنموذج..."></textarea>
           </div>
 
           <div class="btn-row">
@@ -442,7 +622,162 @@
       </div>
     </section>
 
-    <!-- 4. تبويب أعمال رئيس الوحدة -->
+    <!-- 3.5 تبويب طلبات الموظفين -->
+    <section id="tab-emp-requests" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title"><span>📩</span> تقديم ومعالجة طلبات الموظفين الإدارية والخاصة</h2>
+            <p class="card-subtitle">رفع الطلبات الإدارية، التحويل، التكليف، والطلبات المخصصة مع التوليد التلقائي للخطاب المعتمد لـ رئيس الوحدة.</p>
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="choice-card" onclick="showReqSubSection('reqSubmitCard')">
+            <div class="icon">📝</div>
+            <h4>تقديم طلب جديد (Employee View)</h4>
+            <p>تقديم طلب إداري، إضافة/تحويل فترة، نقل، أو طلب إعفاء واستثناء مخصص</p>
+          </div>
+          <div class="choice-card" onclick="showReqSubSection('reqManageCard')">
+            <div class="icon">📊</div>
+            <h4>لوحة تحكم معالجة الطلبات (Manager View)</h4>
+            <p>متابعة كافة الطلبات المقدمة، القبول/الرفض، ومعاينة وطباعة الخطاب المعتمد</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- واجهة تقديم الطلب (Employee View) -->
+      <div id="reqSubmitCard" class="card">
+        <div class="card-header">
+          <h3 class="card-title">📝 نموذج تقديم طلب موظف جديد</h3>
+          <button class="btn btn-outline btn-sm" onclick="showReqSubSection('reqManageCard')">الانتقال للوحة التحكم 📊</button>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label>اختر الموظف مقدم الطلب *</label>
+            <select id="req_emp_select" onchange="onReqEmpSelect()">
+              <option value="">-- اختر الموظف من قاعدة البيانات --</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>نوع الطلب المرفوع *</label>
+            <select id="req_type_select" onchange="onReqTypeChange()">
+              <option value="">-- اختر نوع الطلب --</option>
+              <optgroup label="📋 التكليف والدوام">
+                <option value="طلب تكليف">طلب تكليف موظف / معلم</option>
+                <option value="إنهاء تكليف">طلب إنهاء تكليف موظف / معلم</option>
+                <option value="طلب تعيين الدوام المرن في الساعة">طلب تعيين الدوام المرن بالساعة</option>
+                <option value="خطاب طلب تمديد تعيين (مؤقت)">طلب تمديد تعيين (مؤقت)</option>
+              </optgroup>
+              <optgroup label="🔄 الفترات والمسميات والقسم">
+                <option value="تحويل فترة">طلب تحويل فترة</option>
+                <option value="طلب تحويل فترة (مؤقتة)">طلب تحويل فترة (مؤقتة)</option>
+                <option value="طلب اضافة فترة">طلب إضافة فترة</option>
+                <option value="طلب اضافة فترة (مؤقتة)">طلب إضافة فترة (مؤقتة)</option>
+                <option value="طلب الغاء فترة">طلب إلغاء فترة</option>
+                <option value="طلب الغاء فترة مؤقتة">طلب إلغاء فترة مؤقتة</option>
+                <option value="طلب تغيير مسمى">طلب تغيير مسمى وظيفي</option>
+                <option value="طلب تغيير مسمى (مؤقت)">طلب تغيير مسمى وظيفي (مؤقت)</option>
+                <option value="قرار تحويل قسم موظف-معلم">طلب تحويل قسم / شعبة</option>
+              </optgroup>
+              <optgroup label="🚚 النقل والانتداب والإجازات">
+                <option value="طلب نقل">طلب نقل موظف / معلم</option>
+                <option value="خطاب نقل موظف-معلم">خطاب طلب نقل موظف / معلم</option>
+                <option value="انتداب">طلب انتداب موظف / معلم</option>
+                <option value="طلب اجازة موظف-معلم">طلب إجازة (اعتيادية / مرخص بها / زواج)</option>
+                <option value="مباشرة الموظف-المعلم بعد الاجازة">إشعار مباشرة بعد الإجازة</option>
+                <option value="صرف مستحق موظف-معلم">طلب صرف مستحق مالي</option>
+              </optgroup>
+              <optgroup label="🌟 الطلبات الاستثنائية والخاصة">
+                <option value="طلب مخصص / آخر">🌟 طلب مخصص / آخر (إعفاءات، استثناءات، طلبات خاصة)</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
+        <!-- معاينة التعرف الآلي على هوية الموظف -->
+        <div id="reqEmpPreview" class="card hidden" style="background:var(--gold-100); margin-top:10px; font-size:0.9rem; border:1px solid var(--gold-400);">
+          <p><strong>الاسم:</strong> <span id="rq-name"></span> | <strong>الرقم الوظيفي:</strong> <span id="rq-id"></span> | <strong>الهوية:</strong> <span id="rq-nid"></span> | <strong>الجنسية:</strong> <span id="rq-nation"></span></p>
+          <p><strong>المسمى:</strong> <span id="rq-job"></span> | <strong>الوحدة:</strong> <span id="rq-unit"></span> | <strong>القسم:</strong> <span id="rq-sec"></span> | <strong>الفترات:</strong> <span id="rq-period"></span></p>
+        </div>
+
+        <!-- الحقول الديناميكية حسب نوع الطلب -->
+        <div id="reqDynamicContainer" style="margin-top:14px;">
+          <div class="field-row">
+            <div class="field-group">
+              <label>تاريخ بداية الطلب / الإجراء</label>
+              <input type="date" id="req_start_date">
+            </div>
+            <div class="field-group">
+              <label>تاريخ النهاية / السريان (للحالات المؤقتة)</label>
+              <input type="date" id="req_end_date">
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field-group">
+              <label id="req_extra_label">الفترة / المسمى / القسم المطلوب</label>
+              <input type="text" id="req_extra_val" placeholder="أدخل البيان المطلوب">
+            </div>
+          </div>
+
+          <div class="field-group" style="margin-top:10px;">
+            <label>مبررات وتفاصيل الطلب النصية *</label>
+            <textarea id="req_body_text" rows="3" placeholder="اكتب مبررات الطلب وتفاصيل الموضوع المرفوع لرئيس الوحدة..."></textarea>
+          </div>
+
+          <label style="margin-top:10px; font-weight:bold;">المرفقات الداعمة للطلب (اختر ما تم إرفاقه):</label>
+          <div class="checkbox-group" style="margin-bottom:14px;">
+            <label class="checkbox-label"><input type="checkbox" id="req_att_cv"> السيرة الذاتية</label>
+            <label class="checkbox-label"><input type="checkbox" id="req_att_id"> صورة الهوية</label>
+            <label class="checkbox-label"><input type="checkbox" id="req_att_cert"> المؤهل العلمي / الخبرات</label>
+            <label class="checkbox-label"><input type="checkbox" id="req_att_rec"> التوصية / التزكية / الإعفاء</label>
+            <label class="checkbox-label"><input type="checkbox" id="req_att_other"> مستندات أخرى</label>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="submitEmpRequest()" style="width:100%; font-size:1.05rem; margin-top:10px;">
+          📤 تقديم الطلب وإرساله للإدارة
+        </button>
+      </div>
+
+      <!-- لوحة تحكم الإدارة والمعالجة (Manager View) -->
+      <div id="reqManageCard" class="card hidden">
+        <div class="card-header">
+          <h3 class="card-title">📊 لوحة تحكم متابعة ومعالجة الطلبات المقدمة</h3>
+          <div style="display:flex; gap:8px;">
+            <select id="req_status_filter" onchange="renderEmpRequestsTable()" style="max-width:180px;">
+              <option value="الكل">جميع الحالات</option>
+              <option value="قيد الانتظار" selected>قيد الانتظار ⏳</option>
+              <option value="مقبول">مقبول ✅</option>
+              <option value="مرفوض">مرفوض ❌</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="showReqSubSection('reqSubmitCard')">تقديم طلب جديد 📝</button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>م</th>
+                <th>اسم الموظف</th>
+                <th>المسمى الوظيفي</th>
+                <th>نوع الطلب</th>
+                <th>تاريخ التقديم</th>
+                <th>الحالة</th>
+                <th>ملاحظات الإدارة</th>
+                <th>الإجراءات المعالجة والطباعة</th>
+              </tr>
+            </thead>
+            <tbody id="empRequestsTableBody">
+              <tr><td colspan="8" style="text-align:center;">لا توجد طلبات قدمت حتى الآن...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
     <section id="tab-dashboard" class="tab-panel">
       <div class="card">
         <div class="card-header">
@@ -626,7 +961,7 @@
       <div class="field-row">
         <div class="field-group">
           <label>الوحدة</label>
-          <input type="text" id="empUnitInput" value="حلقات القرآن الكريم">
+          <input type="text" id="empUnitInput" value="الشؤون التعليمية (قران)">
         </div>
         <div class="field-group">
           <label>الشعبة / القسم</label>

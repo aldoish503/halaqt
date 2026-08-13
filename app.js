@@ -12,6 +12,7 @@ const STORAGE_KEYS = {
   MEETINGS: 'AGY_UNIT_MEETINGS',
   ARCHIVE: 'AGY_UNIT_ARCHIVE',
   COUNTERS: 'AGY_UNIT_COUNTERS',
+  EMP_REQUESTS: 'AGY_UNIT_EMP_REQUESTS',
   GOOGLE_SHEET_URL: 'AGY_UNIT_SHEET_URL'
 };
 
@@ -88,12 +89,14 @@ function resetAllSystemData() {
   localStorage.removeItem(STORAGE_KEYS.MEETINGS);
   localStorage.removeItem(STORAGE_KEYS.ARCHIVE);
   localStorage.removeItem(STORAGE_KEYS.COUNTERS);
+  localStorage.removeItem(STORAGE_KEYS.EMP_REQUESTS);
   
   APP_DATA.employees = [];
   APP_DATA.templates = [];
   APP_DATA.tasks = [];
   APP_DATA.meetings = [];
   APP_DATA.archive = [];
+  APP_DATA.requests = [];
   APP_DATA.counter = { year: new Date().getFullYear(), lastNumber: 0 };
   
   saveData();
@@ -106,6 +109,7 @@ let APP_DATA = {
   tasks: getStorage(STORAGE_KEYS.TASKS, []),
   meetings: getStorage(STORAGE_KEYS.MEETINGS, []),
   archive: getStorage(STORAGE_KEYS.ARCHIVE, []),
+  requests: getStorage(STORAGE_KEYS.EMP_REQUESTS, []),
   counter: getStorage(STORAGE_KEYS.COUNTERS, { year: new Date().getFullYear(), lastNumber: 0 }),
   sheetUrl: localStorage.getItem(STORAGE_KEYS.GOOGLE_SHEET_URL) || DEFAULT_GOOGLE_SHEET_URL
 };
@@ -119,6 +123,7 @@ if (localStorage.getItem('AGY_CLEARED_V1') !== 'TRUE') {
   APP_DATA.tasks = [];
   APP_DATA.meetings = [];
   APP_DATA.archive = [];
+  APP_DATA.requests = [];
   APP_DATA.counter = { year: new Date().getFullYear(), lastNumber: 0 };
 }
 
@@ -128,6 +133,7 @@ function saveData() {
   setStorage(STORAGE_KEYS.TASKS, APP_DATA.tasks);
   setStorage(STORAGE_KEYS.MEETINGS, APP_DATA.meetings);
   setStorage(STORAGE_KEYS.ARCHIVE, APP_DATA.archive);
+  setStorage(STORAGE_KEYS.EMP_REQUESTS, APP_DATA.requests);
   setStorage(STORAGE_KEYS.COUNTERS, APP_DATA.counter);
   localStorage.setItem(STORAGE_KEYS.GOOGLE_SHEET_URL, APP_DATA.sheetUrl);
   renderAllViews();
@@ -193,6 +199,7 @@ function renderAllViews() {
   renderMeetingsTable();
   renderStats();
   renderArchiveTable();
+  if (typeof renderEmpRequestsTable === 'function') renderEmpRequestsTable();
 }
 
 function showToast(msg, isError = false) {
@@ -226,12 +233,32 @@ function onFormTypeChange() {
   const candBox = document.getElementById('newCandidateSection');
   const empBox = document.getElementById('existingEmpSection');
 
+  // إخفاء جميع أقسام الحقول المخصصة أولاً
+  document.querySelectorAll('.form-custom-group').forEach(el => el.classList.add('hidden'));
+
   if (type === 'طلب تعيين') {
     candBox.classList.remove('hidden');
     empBox.classList.add('hidden');
   } else if (type) {
     candBox.classList.add('hidden');
     empBox.classList.remove('hidden');
+
+    // إظهار القسم المخصص حسب نوع النموذج
+    if (type.includes('تكليف') || type.includes('إنهاء تكليف')) {
+      document.getElementById('section_assignment_fields')?.classList.remove('hidden');
+    } else if (type.includes('الدوام المرن')) {
+      document.getElementById('section_flexible_hours_fields')?.classList.remove('hidden');
+    } else if (type.includes('انتداب')) {
+      document.getElementById('section_mandate_fields')?.classList.remove('hidden');
+    } else if (type.includes('إجازة') || type.includes('اجازة') || type.includes('مباشرة')) {
+      document.getElementById('section_leave_fields')?.classList.remove('hidden');
+    } else if (type.includes('مساءلة') || type.includes('مخالفة') || type.includes('لفت نظر') || type.includes('لوم')) {
+      document.getElementById('section_disciplinary_fields')?.classList.remove('hidden');
+    } else if (type.includes('صرف مستحق')) {
+      document.getElementById('section_financial_fields')?.classList.remove('hidden');
+    } else if (type.includes('فترة') || type.includes('مسمى') || type.includes('نقل') || type.includes('قسم')) {
+      document.getElementById('section_transfer_title_fields')?.classList.remove('hidden');
+    }
   } else {
     candBox.classList.add('hidden');
     empBox.classList.add('hidden');
@@ -239,8 +266,9 @@ function onFormTypeChange() {
 }
 
 function renderCandNidBoxes() {
-  const nid = String(document.getElementById('cand_nid').value || '').padStart(10, '0');
+  const nid = String(document.getElementById('cand_nid').value || '').trim();
   const container = document.getElementById('cand-id-boxes');
+  if (!container) return;
   container.innerHTML = '';
   for (let i = 0; i < 10; i++) {
     const b = document.createElement('div');
@@ -280,7 +308,7 @@ function submitCandidateForm() {
     phone: document.getElementById('cand_phone').value,
     age: document.getElementById('cand_age').value,
     job: document.getElementById('cand_job').value || 'معلم قرآن',
-    unit: document.getElementById('cand_unit').value,
+    unit: document.getElementById('cand_unit').value || 'الشؤون التعليمية (قران)',
     section: document.getElementById('cand_sec').value,
     periods: periods,
     r1: document.getElementById('cand_r1').value,
@@ -314,6 +342,7 @@ function submitCandidateForm() {
     subject: 'طلب تعيين - ' + name,
     employeeName: name,
     employeeId: 'مرشح جديد',
+    empDetails: empObj,
     status: 'قيد التنفيذ',
     details: candidateData
   };
@@ -328,28 +357,33 @@ function submitCandidateForm() {
 function onEmpSelectForForm() {
   const empId = document.getElementById('formEmpSelect').value;
   const prev = document.getElementById('formEmpPreview');
-  if (!empId) { prev.classList.add('hidden'); return; }
+  if (!empId) { prev?.classList.add('hidden'); return; }
 
   const emp = APP_DATA.employees.find(e => String(e.id) === String(empId));
   if (!emp) return;
 
-  document.getElementById('f-name').textContent = emp.name;
-  document.getElementById('f-id').textContent = emp.id;
-  document.getElementById('f-nid').textContent = emp.nationalId;
-  document.getElementById('f-job').textContent = emp.job;
-  document.getElementById('f-unit').textContent = emp.unit;
-  document.getElementById('f-sec').textContent = emp.section;
+  if (document.getElementById('f-name')) document.getElementById('f-name').textContent = emp.name || '—';
+  if (document.getElementById('f-id')) document.getElementById('f-id').textContent = emp.id || '—';
+  if (document.getElementById('f-nid')) document.getElementById('f-nid').textContent = emp.nationalId || '—';
+  if (document.getElementById('f-nationality')) document.getElementById('f-nationality').textContent = emp.nationality || 'سعودي';
+  if (document.getElementById('f-job')) document.getElementById('f-job').textContent = emp.job || '—';
+  if (document.getElementById('f-unit')) document.getElementById('f-unit').textContent = emp.unit || 'الشؤون التعليمية (قران)';
+  if (document.getElementById('f-sec')) document.getElementById('f-sec').textContent = emp.section || '—';
+  if (document.getElementById('f-period')) document.getElementById('f-period').textContent = emp.period || '—';
+  if (document.getElementById('f-phone')) document.getElementById('f-phone').textContent = emp.phone || '—';
 
-  const nid = String(emp.nationalId || '').padStart(10, '0');
+  const nid = String(emp.nationalId || '').trim();
   const container = document.getElementById('f-id-boxes');
-  container.innerHTML = '';
-  for (let i = 0; i < 10; i++) {
-    const b = document.createElement('div');
-    b.className = 'id-box';
-    b.textContent = nid.charAt(i) || '-';
-    container.appendChild(b);
+  if (container) {
+    container.innerHTML = '';
+    for (let i = 0; i < 10; i++) {
+      const b = document.createElement('div');
+      b.className = 'id-box';
+      b.textContent = nid.charAt(i) || '-';
+      container.appendChild(b);
+    }
   }
-  prev.classList.remove('hidden');
+  prev?.classList.remove('hidden');
 }
 
 function toggleMultiEmpSelectionMode() {
@@ -415,6 +449,38 @@ function submitDefinedForm() {
   const endDate = document.getElementById('formEndDate')?.value || '';
   const extraType = document.getElementById('formExtraType')?.value || '';
 
+  // تجميع كافة الحقول التفصيلية للنماذج
+  const formCustomDetails = {
+    assignJobTitle: document.getElementById('assign_job_title')?.value || '',
+    assignPeriods: document.getElementById('assign_periods')?.value || '',
+    assignDays: document.getElementById('assign_days')?.value || '',
+    assignHours: document.getElementById('assign_hours')?.value || '',
+    assignTasks: document.getElementById('assign_tasks')?.value || '',
+    flexPeriods: Array.from(document.querySelectorAll('.flex_p:checked')).map(c => c.value).join(' / '),
+    flexHoursDay: document.getElementById('flex_hours_day')?.value || '',
+    flexTotalDays: document.getElementById('flex_total_days')?.value || '',
+    flexHoursMonth: document.getElementById('flex_hours_month')?.value || '',
+    flexReasonsTasks: document.getElementById('flex_reasons_tasks')?.value || '',
+    mandateCity: document.getElementById('mandate_city')?.value || '',
+    mandateDays: document.getElementById('mandate_days')?.value || '',
+    mandateTransport: document.getElementById('mandate_transport')?.value || '',
+    mandateHousing: document.getElementById('mandate_housing')?.value || '',
+    mandateGoals: document.getElementById('mandate_goals')?.value || '',
+    leaveType: document.getElementById('leave_type_select')?.value || '',
+    leaveDurationDays: document.getElementById('leave_duration_days')?.value || '',
+    discType: document.getElementById('disc_type')?.value || '',
+    discPrevDate: document.getElementById('disc_prev_date')?.value || '',
+    discDetails: document.getElementById('disc_details')?.value || '',
+    discEmpStatement: document.getElementById('disc_emp_statement')?.value || '',
+    finBasicSalary: document.getElementById('fin_basic_salary')?.value || '',
+    finRequestedAmount: document.getElementById('fin_requested_amount')?.value || '',
+    finClaimMonth: document.getElementById('fin_claim_month')?.value || '',
+    targetPeriodVal: document.getElementById('target_period_val')?.value || '',
+    targetJobTitleVal: document.getElementById('target_job_title_val')?.value || '',
+    targetSectionVal: document.getElementById('target_section_val')?.value || '',
+    procedureReasons: document.getElementById('procedure_reasons')?.value || ''
+  };
+
   const archiveItem = {
     outgoingNumber: outgoing.fullHeader,
     date: todayStr,
@@ -427,8 +493,9 @@ function submitDefinedForm() {
     extraType: extraType,
     isMultiAssignment: isMulti,
     assignedEmployeesList: assignedEmployeesList,
+    customDetails: formCustomDetails,
     status: 'قيد التنفيذ',
-    bodyText: document.getElementById('formEmpNotes').value
+    bodyText: document.getElementById('formEmpNotes')?.value || ''
   };
 
   // إذا كان النموذج إنهاء تكليف صادر من سحب أرشيف سابق
@@ -827,7 +894,7 @@ function removeTemplate(index) {
 }
 
 function renderDropdowns() {
-  ['formEmpSelect', 'openEmpSelect'].forEach(id => {
+  ['formEmpSelect', 'openEmpSelect', 'req_emp_select'].forEach(id => {
     const select = document.getElementById(id);
     if (!select) return;
     const curr = select.value;
@@ -837,6 +904,7 @@ function renderDropdowns() {
     });
     select.value = curr;
   });
+  if (typeof populateEmpRequestDropdowns === 'function') populateEmpRequestDropdowns();
 
   const checklist = document.getElementById('multiEmpChecklist');
   if (checklist) {
@@ -982,6 +1050,11 @@ function renderStats() {
 // 5. المعاينة المعتمدة والطباعة (Print Preview Modal)
 // ------------------------------------------------------------------
 function openPrintModal(item) {
+  if (!item || !item.type) {
+    showToast('عذراً، لا يمكن طباعة نموذج غير معتمد في النظام', true);
+    return;
+  }
+
   const container = document.getElementById('printContent');
   let bodyHtml = '';
 
@@ -989,12 +1062,13 @@ function openPrintModal(item) {
   const emp = item.empDetails || {};
   const empName = item.employeeName || d.name || emp.name || '—';
   const empId = item.employeeId || emp.id || '—';
-  const empNid = emp.nationalId || d.nationalId || '0000000000';
-  const nidStr = String(empNid).padStart(10, '0');
+  const empNid = emp.nationalId || d.nationalId || item.customDetails?.nationalId || '';
+  const nidStr = String(empNid).trim();
 
   let nidBoxes = '<div class="id-boxes-container" style="display:inline-flex; gap:2px; vertical-align:middle; margin:0 4px;">';
   for (let i = 0; i < 10; i++) {
-    nidBoxes += `<div class="id-box" style="width:18px; height:22px; border:1px solid #000; text-align:center; line-height:20px; font-weight:bold; font-size:0.8rem; background:#ffffff; color:#000000;">${nidStr.charAt(i)}</div>`;
+    const charVal = nidStr.charAt(i) || '-';
+    nidBoxes += `<div class="id-box" style="width:18px; height:22px; border:1px solid #000; text-align:center; line-height:20px; font-weight:bold; font-size:0.8rem; background:#ffffff; color:#000000;">${charVal}</div>`;
   }
   nidBoxes += '</div>';
 
@@ -1017,15 +1091,15 @@ function openPrintModal(item) {
         </tr>
         <tr>
           <td><strong>الـوحــدة:</strong></td>
-          <td>${emp.unit || d.unit || 'الشؤون التعليمية'}</td>
+          <td>${emp.unit || d.unit || 'الشؤون التعليمية (قران)'}</td>
           <td><strong>المسمى الوظيفي:</strong></td>
-          <td>${emp.job || d.job || 'معلم / موظف'}</td>
+          <td>${emp.job || d.job || '—'}</td>
         </tr>
         <tr>
           <td><strong>الفترات الحالية:</strong></td>
-          <td>${emp.period || d.periods || 'فترة العمل الرسمية'}</td>
+          <td>${emp.period || d.periods || '—'}</td>
           <td><strong>الشعبة / القسم:</strong></td>
-          <td>${emp.section || d.section || 'حلقات القرآن الكريم'}</td>
+          <td>${emp.section || d.section || '—'}</td>
         </tr>
       </table>
     </div>
@@ -1038,8 +1112,8 @@ function openPrintModal(item) {
         <td style="text-align:center;">${idx + 1}</td>
         <td><strong>${e.name}</strong></td>
         <td style="text-align:center;">${e.id || '—'}</td>
-        <td>${e.job || 'معلم / موظف'}</td>
-        <td>${e.period || 'فترة التكليف الرسمية'}</td>
+        <td>${e.job || '—'}</td>
+        <td>${e.period || '—'}</td>
       </tr>
     `).join('');
 
@@ -1057,127 +1131,149 @@ function openPrintModal(item) {
         ${empRowsHtml}
       </table>
       <p style="font-size:0.9rem;"><strong>تاريخ بداية الإجراء/التكليف:</strong> ${item.startDate || item.date} ${item.endDate ? ' | <strong>تاريخ النهاية:</strong> ' + item.endDate : ''}</p>
-      <p style="font-size:0.9rem;"><strong>المهام والتوجيهات:</strong> ${item.bodyText || 'إكمال كافة الالتزامات والمهام المسندة لحاجة العمل.'}</p>
+      ${item.bodyText ? `<p style="font-size:0.9rem;"><strong>المهام والتوجيهات:</strong> ${item.bodyText}</p>` : ''}
       <div style="margin-top:15px; padding:10px; border:1px solid #000000; background:#ffffff; font-size:0.85rem;">
-        <p style="margin:0 0 4px 0;"><strong>توجيه رئيس وحدة الشؤون المالية والإدارية:</strong> [ ☑ موافق ] [ ☐ غير موافق ]</p>
-        <p style="margin:0;"><strong>اعتماد تنفيذ التكليف الجماعي:</strong> تم الاعتماد والتنفيذ بموجب الاعتماد المالي والإداري.</p>
+        <p style="margin:0 0 4px 0;"><strong>توجيه رئيس وحدة الشؤون المالية والإدارية:</strong> [ ☐ موافق ] [ ☐ غير موافق ]</p>
+        <p style="margin:0;"><strong>التوقيع:</strong> ..................................... | <strong>التاريخ:</strong> &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
       </div>
     `;
   } else if (item.type === 'خطاب رسمي') {
     bodyHtml = `
       <p style="font-weight:bold; font-size:1.1rem; margin-bottom:12px;">${item.addressee || 'فضيلة رئيس وحدة الشؤون المالية والإدارية سلمه الله'}</p>
       <p style="margin-bottom:14px;">السلام عليكم ورحمة الله وبركاته، وبعد:</p>
-      <p style="margin-bottom:16px;">فنسأل الله لكم دوام التوفيق والسداد، ${item.subject ? 'نفيدكم بشأن <strong>(' + item.subject + ')</strong>' : ''}</p>
+      ${item.subject ? `<p style="margin-bottom:16px;">نفيدكم بشأن <strong>(${item.subject})</strong></p>` : ''}
       
       <div style="margin:20px 0; font-size:1.05rem; min-height:140px; background:#ffffff; color:#000000; padding:12px 0; line-height:1.9;">
-        ${item.bodyText || 'نأمل من فضيلتكم التكرم بالإحاطة والعلم والتوجيه بما يلزم، شاكرين ومقدرين جهودكم.'}
+        ${item.bodyText || '................................................................................................................................................................................................................................................................'}
       </div>
 
       <p style="text-align:center; font-weight:bold; margin-top:25px;">والله يحفظكم ويرعاكم،، والسلام عليكم ورحمة الله وبركاته</p>
     `;
   } else {
-    // بناء جدول الجانب التفصيلي المخصص الفريد لكل نموذج لمنع تداخل المحتويات (خلفيات بيضاء 100%)
+    // بناء جدول الجانب التفصيلي المخصص لكل نموذج من النماذج الـ 30 في دليل الموارد
     let actionTableHtml = '';
     const typeStr = item.type || '';
+    const c = item.customDetails || {};
 
-    if (typeStr.includes('تعيين') && !typeStr.includes('تمديد') && !typeStr.includes('دوام')) {
+    if (typeStr.includes('تكليف')) {
+      const assignTitle = c.assignJobTitle || item.extraType || 'مكلف بحلقات القرآن الكريـم';
+      const assignPer = c.assignPeriods || emp.period || '—';
+      const assignHrs = c.assignHours || '—';
+      const assignDays = c.assignDays || '—';
+      const assignTasksText = c.assignTasks || item.bodyText || '';
+
       actionTableHtml = `
         <div style="margin-bottom:14px;">
-          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات المرشح الجديد بالحلقات</h4>
+          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات التكليف والمهام التفصيلية</h4>
           <table style="width:100%; border-collapse:collapse; font-size:0.85rem; background:#ffffff; color:#000000;" border="1" cellpadding="5">
             <tr>
-              <td style="width:22%;"><strong>المسمى الوظيفي المطلوب:</strong></td>
-              <td style="width:28%;"><strong>${emp.job || d.job || 'معلم قرآن كريم'}</strong></td>
-              <td style="width:22%;"><strong>الفترات المطلوبة:</strong></td>
-              <td style="width:28%;"><strong>${emp.period || d.periods || 'الفجر / العصر'}</strong></td>
+              <td style="width:20%;"><strong>مسمى التكليف:</strong></td>
+              <td style="width:30%;"><strong>${assignTitle}</strong></td>
+              <td style="width:20%;"><strong>فترات التكليف:</strong></td>
+              <td style="width:30%;"><strong>${assignPer}</strong></td>
             </tr>
             <tr>
-              <td><strong>مبررات التعيين 1 و 2:</strong></td>
-              <td colspan="3">${item.bodyText || d.r1 || 'حاجة الحلقة الشديدة لمعلم معتمد وتوفر المؤهل اللازم.'}</td>
+              <td><strong>تاريخ التكليف:</strong></td>
+              <td>من ${item.startDate || item.date} إلى ${item.endDate || '—'}</td>
+              <td><strong>عدد الأيام والساعات:</strong></td>
+              <td>${assignDays} أيام | ${assignHrs} ساعات يومياً</td>
+            </tr>
+            <tr>
+              <td><strong>المهام خلال التكليف:</strong></td>
+              <td colspan="3">${assignTasksText ? assignTasksText.replace(/\n/g, '<br>') : '1/ الإشراف الميداني على سير الحلقات<br>2/ إعداد تقرير الحضور والإنصراف اليومي<br>3/ حصر غياب المعلمين والموظفين'}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="margin-top:12px; padding:8px 12px; border:1px solid #000000; background:#ffffff; color:#000000; font-size:0.85rem;">
+          <p style="margin:0 0 4px 0;"><strong>توجيه رئيس وحدة الشؤون المالية والإدارية:</strong> [ ☐ موافق ] [ ☐ غير موافق ] [ ☐ يحول إلى إجازة تعويضية ]</p>
+          <p style="margin:0 0 4px 0;"><strong>اعتماد المدير التنفيذي:</strong> [ ☐ يعتمد ] [ ☐ لا يعتمد ]</p>
+          <p style="margin:0;"><strong>التوقيع:</strong> ..................................... | <strong>التاريخ:</strong> &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+        </div>
+      `;
+    } else if (typeStr.includes('الدوام المرن')) {
+      actionTableHtml = `
+        <div style="margin-bottom:14px;">
+          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات تعيين الدوام المرن بالساعة</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem; background:#ffffff; color:#000000;" border="1" cellpadding="5">
+            <tr>
+              <td style="width:22%;"><strong>مدة العمل المطلوب:</strong></td>
+              <td colspan="3"><strong>${c.flexPeriods || 'الفجر (ساعتان) / الظهر (ساعتان)'}</strong></td>
+            </tr>
+            <tr>
+              <td style="width:22%;"><strong>إجمالي الساعات باليوم:</strong></td>
+              <td style="width:28%;">${c.flexHoursDay || '—'} ساعات</td>
+              <td style="width:22%;"><strong>إجمالي الأيام والشهر:</strong></td>
+              <td style="width:28%;">${c.flexTotalDays || '—'} أيام | ${c.flexHoursMonth || '—'} ساعة/شهر</td>
+            </tr>
+            <tr>
+              <td><strong>تاريخ التعيين:</strong></td>
+              <td colspan="3">من ${item.startDate || item.date} إلى ${item.endDate || '—'}</td>
+            </tr>
+            <tr>
+              <td><strong>مبررات التعيين والمهام:</strong></td>
+              <td colspan="3">${c.flexReasonsTasks ? c.flexReasonsTasks.replace(/\n/g, '<br>') : item.bodyText || '................................................................................................................................................'}</td>
             </tr>
           </table>
         </div>
       `;
-    } else if (typeStr.includes('تحويل فترة')) {
+    } else if (typeStr.includes('انتداب')) {
       actionTableHtml = `
         <div style="margin-bottom:14px;">
-          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات الفترات المحولة</h4>
+          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">قرار وبيانات الانتداب الرسمية</h4>
           <table style="width:100%; border-collapse:collapse; font-size:0.85rem; background:#ffffff; color:#000000;" border="1" cellpadding="5">
             <tr>
-              <td style="width:22%;"><strong>الفترات المراد تحويلها:</strong></td>
-              <td style="width:28%;"><strong>${item.extraType || emp.period || 'الفترة الحالية'}</strong></td>
-              <td style="width:22%;"><strong>الفترة الجديدة:</strong></td>
-              <td style="width:28%;"><strong>${item.subject || 'الفترة الجديدة المطلوبة'}</strong></td>
+              <td style="width:22%;"><strong>مدينة الانتداب:</strong></td>
+              <td style="width:28%;"><strong>${c.mandateCity || '—'}</strong></td>
+              <td style="width:22%;"><strong>عدد أيام الانتداب:</strong></td>
+              <td style="width:28%;"><strong>${c.mandateDays || '—'} يوم/أيام</strong></td>
             </tr>
             <tr>
-              <td><strong>التحويل إلى تاريخ:</strong></td>
-              <td>${item.endDate || 'حسب القرار'}</td>
-              <td><strong>المسمى الوظيفي:</strong></td>
-              <td>${emp.job || 'معلم / موظف'}</td>
+              <td><strong>فترة الانتداب:</strong></td>
+              <td>من ${item.startDate || item.date} إلى ${item.endDate || '—'}</td>
+              <td><strong>وسائل النقل والسكن:</strong></td>
+              <td>النقل: ${c.mandateTransport || 'سيارة رسمية'} | السكن: ${c.mandateHousing || 'تأمين سكن'}</td>
             </tr>
             <tr>
-              <td><strong>مبررات التحويل (1 / 2 / 3 / 4):</strong></td>
-              <td colspan="3">${item.bodyText || '1/ حاجة العمل الميداني بالحلقات 2/ إعادة توزيع الفترات 3/ استكمال النصاب.'}</td>
+              <td><strong>أهداف ومهام الانتداب:</strong></td>
+              <td colspan="3">${c.mandateGoals ? c.mandateGoals.replace(/\n/g, '<br>') : '1/ إنجاز المهمة الرسمية الموكلة بالحرم المكي الشريف<br>2/ التنسيق والإشراف الميداني'}</td>
             </tr>
           </table>
         </div>
-      `;
-    } else if (typeStr.includes('اضافة فترة')) {
-      actionTableHtml = `
-        <div style="margin-bottom:14px;">
-          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات إضافة فترة</h4>
-          <table style="width:100%; border-collapse:collapse; font-size:0.85rem; background:#ffffff; color:#000000;" border="1" cellpadding="5">
-            <tr>
-              <td style="width:22%;"><strong>الفترة المضافة:</strong></td>
-              <td style="width:28%;"><strong>${item.extraType || 'الفترة المطلوبة'}</strong></td>
-              <td style="width:22%;"><strong>الوحدة / القسم:</strong></td>
-              <td style="width:28%;"><strong>${emp.section || 'حلقات القرآن الكريم'}</strong></td>
-            </tr>
-            <tr>
-              <td><strong>مبررات الإضافة:</strong></td>
-              <td colspan="3">${item.bodyText || 'لحاجة الحلقة الميدانية لإضافة فترة عمل جديدة والتغلب على الكثافة.'}</td>
-            </tr>
-          </table>
+
+        <div style="margin-top:12px; padding:8px 12px; border:1px solid #000000; background:#ffffff; color:#000000; font-size:0.85rem;">
+          <p style="margin:0 0 4px 0;"><strong>رأي رئيس وحدة الشؤون المالية والإدارية:</strong> [ ☐ موافق ] [ ☐ غير موافق ] [ ☐ يحول إلى إجازة تعويضية ]</p>
+          <p style="margin:0 0 4px 0;"><strong>اعتماد المدير التنفيذي:</strong> [ ☐ يعتمد ] [ ☐ لا يعتمد ]</p>
+          <p style="margin:0;"><strong>التوقيع:</strong> ..................................... | <strong>التاريخ:</strong> &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
         </div>
       `;
-    } else if (typeStr.includes('مباشرة')) {
+    } else if (typeStr.includes('إجازة') || typeStr.includes('اجازة') || typeStr.includes('مباشرة')) {
+      const lType = c.leaveType || item.extraType || 'إجازة سنوية';
       actionTableHtml = `
         <div style="margin-bottom:14px;">
-          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات الإجازة وتاريخ المباشرة الفعلي</h4>
+          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات الإجازة والمباشرة</h4>
           <table style="width:100%; border-collapse:collapse; font-size:0.85rem; background:#ffffff; color:#000000;" border="1" cellpadding="5">
             <tr>
               <td style="width:22%;"><strong>نوع الإجازة:</strong></td>
-              <td style="width:28%;">[ ☑ سنوية ] [ ☐ اضطرارية ] [ ☐ مرضية ] [ ☐ زواج ] [ ☐ قطع إجازة ]</td>
-              <td style="width:22%;"><strong>مدة الإجازة:</strong></td>
-              <td style="width:28%;"><strong>( ......... ) يوم / أيام</strong></td>
+              <td style="width:28%;"><strong>${lType}</strong></td>
+              <td style="width:22%;"><strong>مدة الإجازة (بالأيام):</strong></td>
+              <td style="width:28%;"><strong>${c.leaveDurationDays || '—'} يوم/أيام</strong></td>
             </tr>
             <tr>
-              <td><strong>تاريخ المباشرة الفعلي:</strong></td>
-              <td colspan="3"><strong>${item.startDate || item.date}م</strong></td>
+              <td><strong>تاريخ الإجازة / المباشرة:</strong></td>
+              <td colspan="3">من ${item.startDate || item.date} إلى ${item.endDate || '—'}</td>
             </tr>
             <tr>
-              <td><strong>اعتماد جهة عمل الموظف:</strong></td>
-              <td colspan="3">نأمل من فضيلتكم اعتماد مباشرة المذكور أعلاه من تاريخ قطعه لإجازته ومباشرته وإكمال اللازم.</td>
+              <td><strong>بيان وسبب الطلب:</strong></td>
+              <td colspan="3">${item.bodyText || '................................................................................................................................................'}</td>
             </tr>
           </table>
         </div>
-      `;
-    } else if (typeStr.includes('إجازة')) {
-      actionTableHtml = `
-        <div style="margin-bottom:14px;">
-          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات طلب / منح الإجازة</h4>
-          <table style="width:100%; border-collapse:collapse; font-size:0.85rem; background:#ffffff; color:#000000;" border="1" cellpadding="5">
-            <tr>
-              <td style="width:22%;"><strong>نوع الإجازة المطلوبة:</strong></td>
-              <td style="width:28%;"><strong>${item.extraType || 'إجازة اعتيادية / زواج'}</strong></td>
-              <td style="width:22%;"><strong>فترة الإجازة:</strong></td>
-              <td style="width:28%;">من ${item.startDate || item.date} إلى ${item.endDate || '—'}</td>
-            </tr>
-            <tr>
-              <td><strong>بيان الإجازة والسبب:</strong></td>
-              <td colspan="3">${item.bodyText || 'نأمل التكرم بالمرخص للمذكور أعلاه بالإجازة الموضحة أعلاه وفق اللوائح المعتمدة.'}</td>
-            </tr>
-          </table>
+
+        <div style="margin-top:12px; padding:8px 12px; border:1px solid #000000; background:#ffffff; color:#000000; font-size:0.85rem;">
+          <p style="margin:0 0 4px 0;"><strong>تدقيق الشؤون المالية والإدارية:</strong> [ ☐ المذكور له رصيد ] [ ☐ ليس له رصيد ]</p>
+          <p style="margin:0 0 4px 0;"><strong>القرار الإداري:</strong> [ ☐ لا مانع من منحه الإجازة إذا كان يستحق نظاماً ] [ ☐ لا نسمح بمنحه ]</p>
+          <p style="margin:0;"><strong>رئيس وحدة الشؤون المالية والإدارية:</strong> ..................................... | <strong>التاريخ:</strong> &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
         </div>
       `;
     } else if (typeStr.includes('مساءلة') || typeStr.includes('مخالفة') || typeStr.includes('لفت نظر') || typeStr.includes('لوم')) {
@@ -1187,20 +1283,20 @@ function openPrintModal(item) {
           <table style="width:100%; border-collapse:collapse; font-size:0.85rem; background:#ffffff; color:#000000;" border="1" cellpadding="5">
             <tr>
               <td style="width:22%;"><strong>نوع الإشعار/المخالفة:</strong></td>
-              <td style="width:28%;"><strong>${typeStr}</strong></td>
-              <td style="width:22%;"><strong>تاريخ الملاحظة:</strong></td>
-              <td style="width:28%;">${item.startDate || item.date}م</td>
+              <td style="width:28%;"><strong>${c.discType || item.type}</strong></td>
+              <td style="width:22%;"><strong>تاريخ الإنذار/اللوم السابق:</strong></td>
+              <td style="width:28%;">${c.discPrevDate || item.startDate || item.date}</td>
             </tr>
             <tr>
-              <td><strong>تفاصيل المخالفة / التأخير:</strong></td>
-              <td colspan="3">[ ☐ التأخير في الحضور ☐ ترك العمل أثناء الدوام ☐ الخروج المبكر ☐ الغياب عن العمل ]<br>${item.bodyText || 'لاحظنا التغيّب أو التأخر عن الدوام الرسمي ونلفت نظركم لضرورة الالتزام.'}</td>
+              <td><strong>تفاصيل المخالفة / الملاحظة:</strong></td>
+              <td colspan="3">${c.discDetails || item.bodyText || '................................................................................................................................................'}</td>
             </tr>
             <tr>
               <td><strong>إفادة الموظف / المعلم:</strong></td>
-              <td colspan="3">...............................................................................................................................................</td>
+              <td colspan="3">${c.discEmpStatement || '................................................................................................................................................'}</td>
             </tr>
             <tr>
-              <td><strong>توصية رئيس الوحدة:</strong></td>
+              <td><strong>توصية رئيس الوحدة والجزاء المقترح:</strong></td>
               <td colspan="3">إفادة الموظف: [ ☐ مقبولة ☐ غير مقبولة ] | تكرار المخالفة: [ ☐ الأولى ☐ الثانية ☐ الثالثة ☐ الرابعة ]<br>الجزاء المقترح: [ ☐ تنبيه لفظي ☐ إنذار كتابي ☐ حسم من الراتب ]</td>
             </tr>
           </table>
@@ -1213,67 +1309,85 @@ function openPrintModal(item) {
           <table style="width:100%; border-collapse:collapse; font-size:0.85rem; background:#ffffff; color:#000000;" border="1" cellpadding="5">
             <tr>
               <td style="width:22%;"><strong>الراتب الأساسي (ريال):</strong></td>
-              <td style="width:28%;">................... ريال</td>
+              <td style="width:28%;"><strong>${c.finBasicSalary ? c.finBasicSalary + ' ريال' : '................... ريال'}</strong></td>
               <td style="width:22%;"><strong>المبلغ المطلوب (ريال):</strong></td>
-              <td style="width:28%;"><strong>${item.extraType || '................... ريال'}</strong></td>
+              <td style="width:28%;"><strong>${c.finRequestedAmount ? c.finRequestedAmount + ' ريال' : '................... ريال'}</strong></td>
             </tr>
             <tr>
-              <td><strong>نوع وسبب الطلب:</strong></td>
-              <td colspan="3">صرف مستحق شهر ( ${item.subject || '................... 2026م'} ) لحاجة العمل الميداني.</td>
+              <td><strong>مستحق شهر / الفترة:</strong></td>
+              <td colspan="3"><strong>${c.finClaimMonth || item.subject || '—'}</strong></td>
+            </tr>
+            <tr>
+              <td><strong>سبب ونوع الطلب:</strong></td>
+              <td colspan="3">${item.bodyText || '................................................................................................................................................'}</td>
             </tr>
           </table>
         </div>
-      `;
-    } else if (typeStr.includes('انتداب')) {
-      actionTableHtml = `
-        <div style="margin-bottom:14px;">
-          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">قرار وبيانات الانتداب</h4>
-          <table style="width:100%; border-collapse:collapse; font-size:0.85rem; background:#ffffff; color:#000000;" border="1" cellpadding="5">
-            <tr>
-              <td style="width:22%;"><strong>فترة الانتداب:</strong></td>
-              <td style="width:28%;">من ${item.startDate || item.date} إلى ${item.endDate || '—'}</td>
-              <td style="width:22%;"><strong>عدد أيام الانتداب:</strong></td>
-              <td style="width:28%;"><strong>( ......... ) يوم/أيام</strong></td>
-            </tr>
-            <tr>
-              <td><strong>الغرض من الانتداب:</strong></td>
-              <td colspan="3">${item.bodyText || 'نظرًا لحاجة الوحدة لإنجاز المهمة الرسمية الموكلة بحرم المسجد الحرام.'}</td>
-            </tr>
-          </table>
+
+        <div style="margin-top:12px; padding:8px 12px; border:1px solid #000000; background:#ffffff; color:#000000; font-size:0.85rem;">
+          <p style="margin:0 0 4px 0;"><strong>الرئيس المباشر:</strong> [ ☐ موافق ] [ ☐ غير موافق ] | <strong>الشؤون المالية والإدارية:</strong> [ ☐ موافق ] [ ☐ غير موافق ]</p>
+          <p style="margin:0 0 4px 0;"><strong>المدير التنفيذي:</strong> [ ☐ يعتمد ] [ ☐ لا يعتمد ]</p>
+          <p style="margin:0;"><strong>التوقيع:</strong> ..................................... | <strong>التاريخ:</strong> &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
         </div>
       `;
     } else if (typeStr.includes('حضور') || typeStr.includes('كشف')) {
       actionTableHtml = `
         <div style="margin-bottom:14px;">
-          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">كشف الحضور والأنصراف الرسمي</h4>
+          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">كشف الحضور والإنصراف الرسمي</h4>
           <table style="width:100%; border-collapse:collapse; font-size:0.8rem; text-align:center; background:#ffffff; color:#000000;" border="1" cellpadding="4">
             <tr>
               <th>اليوم</th><th>التاريخ</th><th>الفترة الصباحية (حضور)</th><th>الفترة الصباحية (انصراف)</th><th>الفترة المسائية (حضور)</th><th>الفترة المسائية (انصراف)</th><th>التوقيع</th>
             </tr>
-            <tr><td>الأحد</td><td>01 / 01</td><td>:</td><td>:</td><td>:</td><td>:</td><td>..................</td></tr>
-            <tr><td>الإثنين</td><td>02 / 01</td><td>:</td><td>:</td><td>:</td><td>:</td><td>..................</td></tr>
-            <tr><td>الثلاثاء</td><td>03 / 01</td><td>:</td><td>:</td><td>:</td><td>:</td><td>..................</td></tr>
-            <tr><td>الأربعاء</td><td>04 / 01</td><td>:</td><td>:</td><td>:</td><td>:</td><td>..................</td></tr>
-            <tr><td>الخميس</td><td>05 / 01</td><td>:</td><td>:</td><td>:</td><td>:</td><td>..................</td></tr>
+            <tr><td>الأحد</td><td>&nbsp; / &nbsp;</td><td>:</td><td>:</td><td>:</td><td>:</td><td>..................</td></tr>
+            <tr><td>الإثنين</td><td>&nbsp; / &nbsp;</td><td>:</td><td>:</td><td>:</td><td>:</td><td>..................</td></tr>
+            <tr><td>الثلاثاء</td><td>&nbsp; / &nbsp;</td><td>:</td><td>:</td><td>:</td><td>:</td><td>..................</td></tr>
+            <tr><td>الأربعاء</td><td>&nbsp; / &nbsp;</td><td>:</td><td>:</td><td>:</td><td>:</td><td>..................</td></tr>
+            <tr><td>الخميس</td><td>&nbsp; / &nbsp;</td><td>:</td><td>:</td><td>:</td><td>:</td><td>..................</td></tr>
           </table>
+        </div>
+      `;
+    } else if (typeStr.includes('مخصص')) {
+      actionTableHtml = `
+        <div style="margin-bottom:14px;">
+          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">تفاصيل ومبررات الطلب المخصص / الإعفاء والاستثناء المرفوع</h4>
+          <div style="border:1px solid #000; padding:10px; font-size:0.9rem; line-height:1.8; min-height:110px; background:#ffffff; color:#000000;">
+            ${item.bodyText ? item.bodyText.replace(/\n/g, '<br>') : '................................................................................................................................................'}
+          </div>
+        </div>
+
+        <div style="margin-top:12px; padding:8px 12px; border:1px solid #000000; background:#ffffff; color:#000000; font-size:0.85rem;">
+          <p style="margin:0 0 6px 0;"><strong>توصية وملاحظات إدارة الوحدة:</strong> ${item.notes || 'تمت الدراسة والعرض لتوجيه فضيلتكم باعتِماد الطلب ماليـاً وإداريـاً'}</p>
+          <p style="margin:0 0 4px 0;"><strong>توجيه فضيلة رئيس وحدة الشؤون التعليمية:</strong> [ ☐ موافق ] [ ☐ غير موافق ]</p>
+          <p style="margin:0;"><strong>التوقيع:</strong> ..................................... | <strong>التاريخ:</strong> &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
         </div>
       `;
     } else {
       actionTableHtml = `
         <div style="margin-bottom:14px;">
-          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات الإجراء والطلب التفصيلية</h4>
+          <h4 style="background:#ffffff; color:#000000; border:1px solid #000000; border-bottom:none; padding:4px 8px; margin:0; font-size:0.9rem; font-weight:bold;">بيانات القرار والتغييرات المطلوبة</h4>
           <table style="width:100%; border-collapse:collapse; font-size:0.85rem; background:#ffffff; color:#000000;" border="1" cellpadding="5">
             <tr>
-              <td style="width:20%;"><strong>نوع الطلب / البيان:</strong></td>
-              <td><strong>${item.extraType || item.subject || item.type}</strong></td>
-              <td style="width:20%;"><strong>فترة الإجراء والتواريخ:</strong></td>
+              <td style="width:22%;"><strong>الفترة الجديدة / المطلوبة:</strong></td>
+              <td style="width:28%;"><strong>${c.targetPeriodVal || item.extraType || '—'}</strong></td>
+              <td style="width:22%;"><strong>المسمى الوظيفي الجديد:</strong></td>
+              <td style="width:28%;"><strong>${c.targetJobTitleVal || '—'}</strong></td>
+            </tr>
+            <tr>
+              <td><strong>الشعبة / القسم / الوحدة الجديدة:</strong></td>
+              <td>${c.targetSectionVal || '—'}</td>
+              <td><strong>تاريخ السريان:</strong></td>
               <td>من ${item.startDate || item.date} إلى ${item.endDate || 'مستمر'}</td>
             </tr>
             <tr>
-              <td><strong>مبررات الإجراء / الملاحظات:</strong></td>
-              <td colspan="3">${item.bodyText || 'حسب الأنظمة واللوائح والتعليمات المعتمدة بوحدة الشؤون التعليمية.'}</td>
+              <td><strong>مبررات القرار:</strong></td>
+              <td colspan="3">${c.procedureReasons || item.bodyText || '................................................................................................................................................'}</td>
             </tr>
           </table>
+        </div>
+
+        <div style="margin-top:12px; padding:8px 12px; border:1px solid #000000; background:#ffffff; color:#000000; font-size:0.85rem;">
+          <p style="margin:0 0 4px 0;"><strong>توجيه رئيس وحدة الشؤون المالية والإدارية:</strong> [ ☐ موافق ] [ ☐ غير موافق ]</p>
+          <p style="margin:0;"><strong>التوقيع:</strong> ..................................... | <strong>التاريخ:</strong> &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
         </div>
       `;
     }
@@ -1282,30 +1396,38 @@ function openPrintModal(item) {
       <h3 style="text-align:center; margin-bottom:15px; color:#000000; text-decoration:underline;">( ${item.type || 'نموذج إداري'} )</h3>
       ${baseEmpTableHtml}
       ${actionTableHtml}
-      
-      <div style="margin-top:15px; font-size:0.9rem; line-height:1.7; color:#000000;">
-        <p style="font-weight:bold; margin-bottom:4px;">فضيلة رئيس وحدة الشؤون المالية والإدارية سلمه الله</p>
-        <p style="margin-bottom:4px;">السلام عليكم ورحمة الله وبركاته، وبعد:</p>
-        <p style="margin-bottom:8px;">نظرًا لحاجة العمل الميداني والتعليمي بالحلقات، نأمل اعتماد قرار المذكور أعلاه وإكمال اللازم.</p>
-      </div>
 
       <div style="margin-top:15px; padding:8px 12px; border:1px solid #000000; background:#ffffff; color:#000000; font-size:0.85rem;">
-        <p style="margin:0 0 4px 0;"><strong>توجيه رئيس وحدة الشؤون المالية والإدارية:</strong> [ ☑ موافق ] [ ☐ غير موافق ]</p>
-        <p style="margin:0;"><strong>التوقيع:</strong> ..................................... | <strong>التاريخ:</strong> &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp; / 2026م</p>
+        <p style="margin:0 0 4px 0;"><strong>توجيه رئيس وحدة الشؤون المالية والإدارية:</strong> [ ☐ موافق ] [ ☐ غير موافق ]</p>
+        <p style="margin:0;"><strong>التوقيع:</strong> ..................................... | <strong>التاريخ:</strong> &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
       </div>
     `;
   }
 
   container.innerHTML = `
-    <div class="print-header" style="position:relative; border-bottom:2px solid #000; padding-bottom:8px; margin-bottom:15px; text-align:center;">
-      <!-- الكليشة الرسمية المستخرجة من ملفات الوورد الأصلية -->
-      <img src="assets/official_header.jpg" alt="الكليشة الرسمية - رئاسة الشؤون الدينية" style="width:100%; max-height:130px; object-fit:contain; display:block; margin:0 auto;">
+    <!-- الكليشة الرسمية النصية الأساسية بدلاً من الصورة المرفقة -->
+    <div class="print-header" style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:18px; font-family:'Tajawal', sans-serif;">
       
-      <!-- مربع الصادر والتاريخ والتفاصيل في أعلى اليسار -->
-      <div class="print-meta" style="position:absolute; top:2px; left:2px; border:1px solid #000; padding:4px 8px; background:#ffffff; color:#000000; font-size:0.8rem; text-align:right; min-width:155px;">
-        <strong>رقم الصادر:</strong> ${item.outgoingNumber}<br>
-        <strong>التاريخ:</strong> ${item.date}<br>
-        <strong>المرفقات:</strong> بدون
+      <!-- الجانب الأيمن: الترويسة الرسمية المعتمدة -->
+      <div style="text-align:right; line-height:1.45; font-size:0.85rem; font-weight:bold; color:#000000;">
+        <div>المملكة العربية السعودية</div>
+        <div>رئاسة الشؤون الدينية بالمسجد الحرام والمسجد النبوي</div>
+        <div>وكالة الشؤون الدينية بالمسجد النبوي</div>
+        <div>الإدارة العامة للشؤون التعليمية والتوجيهية</div>
+        <div>وحدة الشؤون التعليمية (قران)</div>
+      </div>
+      
+      <!-- الوسط: البسملة وشعار الوحدة -->
+      <div style="text-align:center; color:#000000; font-weight:bold; padding-top:4px;">
+        <div style="font-size:1rem; margin-bottom:6px;">بسم الله الرحمن الرحيم</div>
+        <div style="font-size:0.82rem; border:1px solid #000; padding:3px 10px; display:inline-block; background:#ffffff;">وحدة الشؤون التعليمية</div>
+      </div>
+
+      <!-- الجانب الأيسر: مربع الصادر والتاريخ والتفاصيل -->
+      <div class="print-meta" style="text-align:right; border:1px solid #000; padding:6px 10px; background:#ffffff; color:#000000; font-size:0.82rem; line-height:1.6; min-width:160px;">
+        <div><strong>الـرقــم:</strong> ${item.outgoingNumber}</div>
+        <div><strong>التاريخ:</strong> ${item.date}</div>
+        <div><strong>المرفقات:</strong> بدون</div>
       </div>
     </div>
     
@@ -1313,14 +1435,12 @@ function openPrintModal(item) {
       ${bodyHtml}
     </div>
 
-    <div class="print-footer" style="margin-top:25px; display:flex; justify-content:space-between; align-items:flex-end; font-size:0.88rem; color:#000000;">
-      <div style="text-align:center;">
-        <strong>ختم الجهة الرسمية المعتمد</strong><br>
-        <img src="assets/official_stamp.jpg" alt="الختم المعتمد" style="max-height:80px; object-fit:contain; margin-top:4px; opacity:0.85;" onerror="this.style.display='none';">
-      </div>
-      <div style="text-align:center;">
-        <strong>رئيس وحدة الشؤون التعليمية</strong><br><br>
-        <strong>يزيد بن عبد الرحمن الدويش</strong>
+    <!-- تذييل المستند الرسمي (التوقيع المعتمد فقط بدون ختم) -->
+    <div class="print-footer" style="margin-top:35px; display:flex; justify-content:flex-end; align-items:flex-end; font-size:0.88rem; color:#000000; font-weight:bold;">
+      <div style="text-align:center; min-width:220px;">
+        <div>رئيس وحدة الشؤون التعليمية</div>
+        <br><br>
+        <div>يزيد بن عبد الرحمن الدويش</div>
       </div>
     </div>
   `;
@@ -1568,4 +1688,244 @@ function parseCSVAndImport(csvText, isQuiet = false) {
     saveData();
     if (!isQuiet) showToast(`تم جلب وتطبيق ${importedEmps.length} موظف من Google Sheet بنجاح`);
   }
+}
+
+// ------------------------------------------------------------------
+// 7. صفحة وواجهة طلبات الموظفين (Employee Requests Portal & Admin View)
+// ------------------------------------------------------------------
+function showReqSubSection(cardId) {
+  const submitCard = document.getElementById('reqSubmitCard');
+  const manageCard = document.getElementById('reqManageCard');
+  if (cardId === 'reqSubmitCard') {
+    submitCard?.classList.remove('hidden');
+    manageCard?.classList.add('hidden');
+  } else {
+    submitCard?.classList.add('hidden');
+    manageCard?.classList.remove('hidden');
+    renderEmpRequestsTable();
+  }
+}
+
+function populateEmpRequestDropdowns() {
+  const select = document.getElementById('req_emp_select');
+  if (!select) return;
+  const curr = select.value;
+  select.innerHTML = '<option value="">-- اختر الموظف من قاعدة البيانات --</option>';
+  APP_DATA.employees.forEach(e => {
+    select.innerHTML += `<option value="${e.id}">${e.name} (${e.id}) - ${e.job || ''}</option>`;
+  });
+  select.value = curr;
+}
+
+function onReqEmpSelect() {
+  const empId = document.getElementById('req_emp_select').value;
+  const prev = document.getElementById('reqEmpPreview');
+  if (!empId) { prev?.classList.add('hidden'); return; }
+
+  const emp = APP_DATA.employees.find(e => String(e.id) === String(empId));
+  if (!emp) return;
+
+  if (document.getElementById('rq-name')) document.getElementById('rq-name').textContent = emp.name || '—';
+  if (document.getElementById('rq-id')) document.getElementById('rq-id').textContent = emp.id || '—';
+  if (document.getElementById('rq-nid')) document.getElementById('rq-nid').textContent = emp.nationalId || '—';
+  if (document.getElementById('rq-nation')) document.getElementById('rq-nation').textContent = emp.nationality || 'سعودي';
+  if (document.getElementById('rq-job')) document.getElementById('rq-job').textContent = emp.job || '—';
+  if (document.getElementById('rq-unit')) document.getElementById('rq-unit').textContent = emp.unit || 'الشؤون التعليمية (قران)';
+  if (document.getElementById('rq-sec')) document.getElementById('rq-sec').textContent = emp.section || '—';
+  if (document.getElementById('rq-period')) document.getElementById('rq-period').textContent = emp.period || '—';
+
+  prev?.classList.remove('hidden');
+}
+
+function onReqTypeChange() {
+  const type = document.getElementById('req_type_select').value;
+  const extraLabel = document.getElementById('req_extra_label');
+
+  if (type.includes('تحويل فترة')) {
+    if (extraLabel) extraLabel.textContent = 'الفترة المراد التحويل إليها *';
+  } else if (type.includes('اضافة فترة')) {
+    if (extraLabel) extraLabel.textContent = 'الفترة المراد إضافتها *';
+  } else if (type.includes('نقل')) {
+    if (extraLabel) extraLabel.textContent = 'الوحدة / الفترة المنقول إليها *';
+  } else if (type.includes('تغيير مسمى')) {
+    if (extraLabel) extraLabel.textContent = 'المسمى الوظيفي الجديد المطلوب *';
+  } else if (type.includes('قسم')) {
+    if (extraLabel) extraLabel.textContent = 'القسم / الشعبة الجديدة المطلوبة *';
+  } else if (type.includes('مخصص')) {
+    if (extraLabel) extraLabel.textContent = 'عنوان الموضوع المخصص / نوع الإعفاء والترخيص *';
+  } else {
+    if (extraLabel) extraLabel.textContent = 'الفترة / المسمى / البيان المطلوب';
+  }
+}
+
+function submitEmpRequest() {
+  const empId = document.getElementById('req_emp_select').value;
+  const reqType = document.getElementById('req_type_select').value;
+  const bodyText = document.getElementById('req_body_text').value.trim();
+
+  if (!empId) return showToast('اختر الموظف مقدم الطلب أولاً', true);
+  if (!reqType) return showToast('اختر نوع الطلب المطلوب', true);
+  if (!bodyText) return showToast('ادخل مبررات وتفاصيل الطلب النصية', true);
+
+  const emp = APP_DATA.employees.find(e => String(e.id) === String(empId));
+  const todayStr = new Date().toLocaleDateString('ar-SA');
+
+  const attachments = [];
+  if (document.getElementById('req_att_cv')?.checked) attachments.push('سيرة ذاتية');
+  if (document.getElementById('req_att_id')?.checked) attachments.push('صورة الهوية');
+  if (document.getElementById('req_att_cert')?.checked) attachments.push('مؤهلات وشهادات');
+  if (document.getElementById('req_att_rec')?.checked) attachments.push('توصية / إعفاء');
+  if (document.getElementById('req_att_other')?.checked) attachments.push('مستندات أخرى');
+
+  const reqItem = {
+    id: 'طلب-' + Date.now().toString().slice(-5),
+    empId: empId,
+    empName: emp ? emp.name : '—',
+    empJob: emp ? emp.job : '—',
+    empDetails: emp,
+    type: reqType,
+    date: todayStr,
+    startDate: document.getElementById('req_start_date')?.value || todayStr,
+    endDate: document.getElementById('req_end_date')?.value || '',
+    extraVal: document.getElementById('req_extra_val')?.value || '',
+    bodyText: bodyText,
+    attachments: attachments,
+    status: 'قيد الانتظار',
+    notes: ''
+  };
+
+  if (!APP_DATA.requests) APP_DATA.requests = [];
+  APP_DATA.requests.unshift(reqItem);
+  saveData();
+  sendToGoogleSheetWebhook('request', reqItem);
+
+  showToast('تم إرسال الطلب بنجاح وتوجيهه للوحة معالجة الإدارة 📩');
+  document.getElementById('req_body_text').value = '';
+  document.getElementById('req_extra_val').value = '';
+  showReqSubSection('reqManageCard');
+}
+
+function renderEmpRequestsTable() {
+  const tbody = document.getElementById('empRequestsTableBody');
+  if (!tbody) return;
+
+  const statusFilter = document.getElementById('req_status_filter')?.value || 'الكل';
+  if (!APP_DATA.requests) APP_DATA.requests = [];
+
+  const filtered = APP_DATA.requests.filter(r => statusFilter === 'الكل' || r.status === statusFilter);
+
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:15px; color:#666;">لا توجد طلبات مقدمة مطابقة للفلتر المحظور</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '';
+  filtered.forEach((r, idx) => {
+    let badgeClass = 'badge-normal';
+    if (r.status === 'مقبول') badgeClass = 'badge-urgent';
+    else if (r.status === 'مرفوض') badgeClass = 'badge-normal';
+
+    const rawIdx = APP_DATA.requests.indexOf(r);
+
+    tbody.innerHTML += `
+      <tr>
+        <td><strong>${idx + 1}</strong></td>
+        <td><strong>${r.empName}</strong> (${r.empId})</td>
+        <td>${r.empJob || '—'}</td>
+        <td><span style="font-weight:bold; color:var(--primary-800);">${r.type}</span></td>
+        <td>${r.date}</td>
+        <td><span class="badge ${badgeClass}">${r.status}</span></td>
+        <td>${r.notes || '—'}</td>
+        <td>
+          <div style="display:flex; gap:4px; flex-wrap:wrap;">
+            ${r.status === 'قيد الانتظار' ? `
+              <button class="btn btn-primary btn-sm" onclick="updateEmpRequestStatus(${rawIdx}, 'مقبول')">✅ قبول واعتماد</button>
+              <button class="btn btn-danger btn-sm" onclick="updateEmpRequestStatus(${rawIdx}, 'مرفوض')">❌ رفض</button>
+            ` : ''}
+            <button class="btn btn-outline btn-sm" onclick="previewEmpRequestForm(${rawIdx})">👁️ معاينة وتوليد الخطاب</button>
+            <button class="btn btn-secondary btn-sm" onclick="printEmpRequestForm(${rawIdx})">🖨️ طباعة النموذج</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function updateEmpRequestStatus(index, newStatus) {
+  const req = APP_DATA.requests[index];
+  if (!req) return;
+
+  const notes = prompt(`أدخل ملاحظات الإدارة وتوجيه رئيس الوحدة على الطلب (${newStatus}):`, req.notes || '');
+  if (notes === null) return;
+
+  req.status = newStatus;
+  req.notes = notes;
+
+  if (newStatus === 'مقبول') {
+    // ضخ بيانات الطلب آلياً إلى الأرشيف وتصيد رقم صادر رسمي
+    const outgoing = generateNextOutgoingNumber();
+    const archiveItem = {
+      outgoingNumber: outgoing.fullHeader,
+      date: new Date().toLocaleDateString('ar-SA'),
+      type: req.type,
+      subject: req.type + ' - ' + req.empName,
+      employeeName: req.empName,
+      employeeId: req.empId,
+      empDetails: req.empDetails,
+      startDate: req.startDate,
+      endDate: req.endDate,
+      extraType: req.extraVal,
+      customDetails: {
+        targetPeriodVal: req.extraVal,
+        targetJobTitleVal: req.extraVal,
+        targetSectionVal: req.extraVal,
+        procedureReasons: req.bodyText
+      },
+      status: 'تم القبول والإنجاز',
+      bodyText: req.bodyText + (notes ? '\nتوجيه وملاحظات الإدارة: ' + notes : '')
+    };
+
+    APP_DATA.archive.unshift(archiveItem);
+    sendToGoogleSheetWebhook('archive', archiveItem);
+    showToast(`تم قبول الطلب وتوليد رقم الصادر الرسمي: ${outgoing.fullHeader} وأرشفته بنجاح ✅`);
+  } else {
+    showToast(`تم تحديث حالة الطلب إلى: ${newStatus}`);
+  }
+
+  saveData();
+  renderEmpRequestsTable();
+}
+
+function previewEmpRequestForm(index) {
+  const req = APP_DATA.requests[index];
+  if (!req) return;
+
+  const archiveItem = {
+    outgoingNumber: req.outgoingNumber || generateNextOutgoingNumber().fullHeader,
+    date: req.date,
+    type: req.type,
+    subject: req.type + ' - ' + req.empName,
+    employeeName: req.empName,
+    employeeId: req.empId,
+    empDetails: req.empDetails,
+    startDate: req.startDate,
+    endDate: req.endDate,
+    extraType: req.extraVal,
+    customDetails: {
+      targetPeriodVal: req.extraVal,
+      targetJobTitleVal: req.extraVal,
+      targetSectionVal: req.extraVal,
+      procedureReasons: req.bodyText
+    },
+    status: req.status,
+    notes: req.notes,
+    bodyText: req.bodyText
+  };
+
+  openPrintModal(archiveItem);
+}
+
+function printEmpRequestForm(index) {
+  previewEmpRequestForm(index);
+  setTimeout(() => window.print(), 400);
 }
