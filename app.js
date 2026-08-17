@@ -14,7 +14,8 @@ const STORAGE_KEYS = {
   COUNTERS: 'AGY_UNIT_COUNTERS',
   EMP_REQUESTS: 'AGY_UNIT_EMP_REQUESTS',
   GOOGLE_SHEET_URL: 'AGY_UNIT_SHEET_URL',
-  USERS: 'AGY_UNIT_USERS'
+  USERS: 'AGY_UNIT_USERS',
+  ACTIVITIES: 'AGY_UNIT_ACTIVITIES'
 };
 
 // ------------------------------------------------------------------
@@ -95,6 +96,7 @@ function resetAllSystemData() {
   localStorage.removeItem(STORAGE_KEYS.COUNTERS);
   localStorage.removeItem(STORAGE_KEYS.EMP_REQUESTS);
   localStorage.removeItem(STORAGE_KEYS.USERS);
+  localStorage.removeItem(STORAGE_KEYS.ACTIVITIES);
   
   APP_DATA.employees = [];
   APP_DATA.templates = [];
@@ -102,10 +104,12 @@ function resetAllSystemData() {
   APP_DATA.meetings = [];
   APP_DATA.archive = [];
   APP_DATA.requests = [];
+  APP_DATA.activities = [];
   APP_DATA.counter = { year: new Date().getFullYear(), lastNumber: 0 };
   APP_DATA.users = [...DEFAULT_USERS];
   
   saveData();
+  logActivity('النظام', 'تمت عملية إعادة ضبط وتصفير بيانات النظام');
   showToast('تم مسح وتصفير كافة بيانات النظام بنجاح للبدء من جديد!');
 }
 
@@ -118,7 +122,8 @@ let APP_DATA = {
   requests: getStorage(STORAGE_KEYS.EMP_REQUESTS, []),
   counter: getStorage(STORAGE_KEYS.COUNTERS, { year: new Date().getFullYear(), lastNumber: 0 }),
   sheetUrl: localStorage.getItem(STORAGE_KEYS.GOOGLE_SHEET_URL) || DEFAULT_GOOGLE_SHEET_URL,
-  users: getStorage(STORAGE_KEYS.USERS, DEFAULT_USERS)
+  users: getStorage(STORAGE_KEYS.USERS, DEFAULT_USERS),
+  activities: getStorage(STORAGE_KEYS.ACTIVITIES, [])
 };
 
 // تصفير آلي عند تحديث هذه النسخة لتطهير البيانات التجريبية السابقة
@@ -131,6 +136,7 @@ if (localStorage.getItem('AGY_CLEARED_V1') !== 'TRUE') {
   APP_DATA.meetings = [];
   APP_DATA.archive = [];
   APP_DATA.requests = [];
+  APP_DATA.activities = [];
   APP_DATA.counter = { year: new Date().getFullYear(), lastNumber: 0 };
   APP_DATA.users = [...DEFAULT_USERS];
 }
@@ -145,6 +151,7 @@ function saveData() {
   setStorage(STORAGE_KEYS.COUNTERS, APP_DATA.counter);
   localStorage.setItem(STORAGE_KEYS.GOOGLE_SHEET_URL, APP_DATA.sheetUrl);
   setStorage(STORAGE_KEYS.USERS, APP_DATA.users);
+  setStorage(STORAGE_KEYS.ACTIVITIES, APP_DATA.activities);
   renderAllViews();
 }
 
@@ -214,6 +221,7 @@ function doLogin() {
     sessionStorage.setItem('AGY_LOGGED_USER', username);
     sessionStorage.setItem('AGY_LOGGED_FULLNAME', user.fullname);
     checkLoginState();
+    logActivity('تسجيل دخول', 'قام المستخدم بتسجيل الدخول إلى النظام');
     renderAllViews();
     showToast('مرحباً ' + user.fullname + '، تم تسجيل الدخول بنجاح ✅');
   } else {
@@ -222,6 +230,7 @@ function doLogin() {
 }
 
 function doLogout() {
+  logActivity('تسجيل خروج', 'قام المستخدم بتسجيل الخروج من النظام');
   sessionStorage.removeItem('AGY_LOGGED_IN');
   sessionStorage.removeItem('AGY_LOGGED_USER');
   sessionStorage.removeItem('AGY_LOGGED_FULLNAME');
@@ -276,6 +285,7 @@ function renderAllViews() {
   if (typeof renderEmpRequestsTable === 'function') renderEmpRequestsTable();
   if (typeof renderDefinedFormsTable === 'function') renderDefinedFormsTable();
   if (typeof renderUsersTable === 'function') renderUsersTable();
+  if (typeof renderActivityLogTable === 'function') renderActivityLogTable();
 }
 
 function showToast(msg, isError = false) {
@@ -444,6 +454,7 @@ function submitCandidateForm() {
   APP_DATA.archive.unshift(archiveItem);
   saveData();
   sendToGoogleSheetWebhook('archive', archiveItem);
+  logActivity('إصدار نموذج', `تم اعتماد وتوليد طلب تعيين للمرشح: ${name} برقم صادر: ${outgoing.fullHeader}`);
 
   showToast('تم اعتماد طلب التعيين وحفظه بنجاح برقم صادر: ' + outgoing.fullHeader);
   openPrintModal(archiveItem);
@@ -602,6 +613,7 @@ function submitDefinedForm() {
   APP_DATA.archive.unshift(archiveItem);
   saveData();
   sendToGoogleSheetWebhook('archive', archiveItem);
+  logActivity('إصدار نموذج', `تم إصدار نموذج "${formTitle}" لـ: ${employeeName} برقم صادر: ${outgoing.fullHeader}`);
 
   showToast('تم اعتماد النموذج وحفظه برقم: ' + outgoing.fullHeader);
   openPrintModal(archiveItem);
@@ -634,6 +646,7 @@ function submitOpenLetter() {
   APP_DATA.archive.unshift(archiveItem);
   saveData();
   sendToGoogleSheetWebhook('archive', archiveItem);
+  logActivity('إصدار خطاب', `تم إصدار خطاب رسمي بعنوان "${subject}" موجه إلى "${addressee}" برقم صادر: ${outgoing.fullHeader}`);
 
   showToast('تم إعداد الخطاب وحفظه بنجاح برقم: ' + outgoing.fullHeader);
   openPrintModal(archiveItem);
@@ -742,8 +755,10 @@ function terminateAssignmentFromArchive(index) {
 
 function changeArchiveStatus(index, newStatus) {
   if (APP_DATA.archive[index]) {
-    APP_DATA.archive[index].status = newStatus;
+    const item = APP_DATA.archive[index];
+    item.status = newStatus;
     saveData();
+    logActivity('الأرشيف', `تم تحديث حالة المعاملة (${item.outgoingNumber}) إلى "${newStatus}"`);
     showToast('تم تحديث حالة المعاملة إلى: ' + newStatus);
   }
 }
@@ -843,9 +858,11 @@ function submitEmployeeForm() {
 
   if (indexVal !== '') {
     APP_DATA.employees[Number(indexVal)] = empData;
+    logActivity('الموظفين', `تم تعديل بيانات الموظف: ${empData.name} (${empData.id})`);
     showToast('تم تعديل بيانات الموظف بنجاح');
   } else {
     APP_DATA.employees.push(empData);
+    logActivity('الموظفين', `تمت إضافة موظف جديد: ${empData.name} (${empData.id})`);
     showToast('تمت إضافة الموظف الجديد وحفظه بنجاح');
   }
 
@@ -855,9 +872,14 @@ function submitEmployeeForm() {
 }
 
 function removeEmployee(index) {
+  const emp = APP_DATA.employees[index];
+  if (!emp) return;
   if (confirm('هل أنت متأكد من حذف بيانات هذا الموظف؟')) {
+    const empName = emp.name;
+    const empId = emp.id;
     APP_DATA.employees.splice(index, 1);
     saveData();
+    logActivity('الموظفين', `تم حذف الموظف: ${empName} (${empId})`);
     showToast('تم الحذف بنجاح');
   }
 }
@@ -1051,6 +1073,7 @@ function submitMeeting() {
   APP_DATA.meetings.push(m);
   saveData();
   sendToGoogleSheetWebhook('meeting', m);
+  logActivity('المهام والتقويم', `تمت إضافة موعد جديد بعنوان: ${title}`);
 
   document.getElementById('meetingTitle').value = '';
   showToast('تم حفظ الموعد بنجاح في النظام وشيت جوجل');
@@ -1081,6 +1104,7 @@ function submitTask() {
   APP_DATA.tasks.push(t);
   saveData();
   sendToGoogleSheetWebhook('task', t);
+  logActivity('المهام والتقويم', `تمت إضافة مهمة جديدة: ${title}`);
 
   document.getElementById('taskTitle').value = '';
   showToast('تمت إضافة المهمة وحفظها بنجاح');
@@ -1108,8 +1132,10 @@ function renderTasksTable() {
 
 function toggleTask(index) {
   if (APP_DATA.tasks[index]) {
-    APP_DATA.tasks[index].status = APP_DATA.tasks[index].status === 'مكتمل' ? 'قيد التنفيذ' : 'مكتمل';
+    const task = APP_DATA.tasks[index];
+    task.status = task.status === 'مكتمل' ? 'قيد التنفيذ' : 'مكتمل';
     saveData();
+    logActivity('المهام والتقويم', `تم تحديث حالة المهمة "${task.title}" إلى "${task.status}"`);
   }
 }
 
@@ -1128,6 +1154,7 @@ function saveQuickDecision() {
   APP_DATA.tasks.push(t);
   saveData();
   sendToGoogleSheetWebhook('task', t);
+  logActivity('المهام والتقويم', `تم إصدار توجيه عاجل: ${text}`);
 
   document.getElementById('quickDecisionText').value = '';
   showToast('تم حفظ التوجيه كـ مهمة عاجلة وحفظه في شيت جوجل');
@@ -2146,6 +2173,7 @@ function submitUserForm() {
 
   if (indexVal !== '') {
     APP_DATA.users[Number(indexVal)] = userData;
+    logActivity('المستخدمين', `تم تعديل بيانات المستخدم: ${userData.username} (${userData.fullname})`);
     showToast('تم تعديل بيانات المستخدم بنجاح');
   } else {
     // التحقق من عدم تكرار اسم المستخدم
@@ -2153,6 +2181,7 @@ function submitUserForm() {
       return showToast('اسم المستخدم موجود مسبقاً', true);
     }
     APP_DATA.users.push(userData);
+    logActivity('المستخدمين', `تمت إضافة مستخدم جديد: ${userData.username} (${userData.fullname})`);
     showToast('تمت إضافة المستخدم الجديد بنجاح');
   }
 
@@ -2166,8 +2195,160 @@ function removeUser(index) {
     return showToast('لا يمكن حذف المستخدم الرئيسي للنظام', true);
   }
   if (confirm('هل أنت متأكد من حذف هذا المستخدم؟')) {
+    const deletedName = u.fullname || u.username;
     APP_DATA.users.splice(index, 1);
     saveData();
+    logActivity('المستخدمين', `تم حذف المستخدم: ${deletedName} (${u.username})`);
     showToast('تم حذف المستخدم بنجاح');
   }
 }
+
+// ------------------------------------------------------------------
+// 8. نظام تسجيل النشاطات والعمليات (Activity Log System)
+// ------------------------------------------------------------------
+function logActivity(actionType, description, extraInfo = '') {
+  const username = sessionStorage.getItem('AGY_LOGGED_USER') || '2142';
+  const fullname = sessionStorage.getItem('AGY_LOGGED_FULLNAME') || 'يزيد بن عبد الرحمن الدويش';
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('ar-SA');
+  const timeStr = now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const isoDate = now.toISOString().slice(0, 10);
+
+  const entry = {
+    id: 'act_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+    timestamp: now.toISOString(),
+    isoDate: isoDate,
+    dateStr: dateStr,
+    timeStr: timeStr,
+    fullTimeStr: `${dateStr} - ${timeStr}`,
+    username: username,
+    fullname: fullname,
+    actionType: actionType,
+    description: description,
+    extra: extraInfo
+  };
+
+  if (!APP_DATA.activities) APP_DATA.activities = [];
+  APP_DATA.activities.unshift(entry);
+
+  // حصر السجل في آخر 1000 عملية
+  if (APP_DATA.activities.length > 1000) {
+    APP_DATA.activities = APP_DATA.activities.slice(0, 1000);
+  }
+
+  setStorage(STORAGE_KEYS.ACTIVITIES, APP_DATA.activities);
+
+  // تحديث الجدول إذا كان معروضاً
+  const tbody = document.getElementById('activityLogTableBody');
+  if (tbody) {
+    renderActivityLogTable();
+  }
+}
+
+function renderActivityLogTable() {
+  const tbody = document.getElementById('activityLogTableBody');
+  if (!tbody) return;
+
+  const searchQuery = (document.getElementById('activitySearchInput')?.value || '').toLowerCase().trim();
+  const typeFilter = document.getElementById('activityTypeFilter')?.value || 'الكل';
+  const dateFilter = document.getElementById('activityDateFilter')?.value || '';
+
+  if (!APP_DATA.activities) APP_DATA.activities = [];
+
+  const filtered = APP_DATA.activities.filter(act => {
+    // 1. تصفية بالبحث النصي
+    const matchQuery = !searchQuery || 
+      (act.description || '').toLowerCase().includes(searchQuery) ||
+      (act.username || '').toLowerCase().includes(searchQuery) ||
+      (act.fullname || '').toLowerCase().includes(searchQuery) ||
+      (act.actionType || '').toLowerCase().includes(searchQuery);
+
+    // 2. تصفية بنوع العملية
+    let matchType = true;
+    if (typeFilter !== 'الكل') {
+      matchType = (act.actionType || '').includes(typeFilter);
+    }
+
+    // 3. تصفية بالتاريخ
+    let matchDate = true;
+    if (dateFilter) {
+      matchDate = (act.isoDate === dateFilter) || (act.timestamp && act.timestamp.startsWith(dateFilter));
+    }
+
+    return matchQuery && matchType && matchDate;
+  });
+
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:18px; color:var(--text-muted);">لا توجد نشاطات أو عمليات مسجلة مطابقة للبحث</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '';
+  filtered.forEach((act, idx) => {
+    let badgeClass = 'act-badge-archive';
+    const t = act.actionType || '';
+    if (t.includes('دخول')) badgeClass = 'act-badge-login';
+    else if (t.includes('خروج')) badgeClass = 'act-badge-logout';
+    else if (t.includes('نموذج') || t.includes('تعيين')) badgeClass = 'act-badge-form';
+    else if (t.includes('خطاب')) badgeClass = 'act-badge-letter';
+    else if (t.includes('موظف')) badgeClass = 'act-badge-emp';
+    else if (t.includes('مستخدم')) badgeClass = 'act-badge-user';
+    else if (t.includes('طلب')) badgeClass = 'act-badge-req';
+    else if (t.includes('مهمة') || t.includes('موعد') || t.includes('توجيه')) badgeClass = 'act-badge-task';
+    else if (t.includes('حذف') || t.includes('تفريغ') || t.includes('تصفير')) badgeClass = 'act-badge-delete';
+
+    tbody.innerHTML += `
+      <tr>
+        <td style="text-align:center;"><strong>${idx + 1}</strong></td>
+        <td style="font-size:0.82rem; color:var(--text-muted); direction:ltr; text-align:right;">${act.fullTimeStr || act.dateStr || ''}</td>
+        <td><span class="act-user-tag">👤 ${act.username || '2142'}</span></td>
+        <td><strong>${act.fullname || '—'}</strong></td>
+        <td><span class="act-badge ${badgeClass}">${act.actionType || 'إجراء'}</span></td>
+        <td style="line-height:1.6;">${act.description || '—'}</td>
+      </tr>
+    `;
+  });
+}
+
+function exportActivityLogCSV() {
+  if (!APP_DATA.activities || !APP_DATA.activities.length) {
+    return showToast('لا توجد نشاطات لتصديرها', true);
+  }
+
+  let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+  csvContent += "م,التاريخ والوقت,اسم المستخدم,الاسم الكامل,نوع العملية,تفاصيل الإجراء\n";
+
+  APP_DATA.activities.forEach((act, idx) => {
+    const row = [
+      idx + 1,
+      act.fullTimeStr || act.dateStr,
+      act.username,
+      act.fullname,
+      act.actionType,
+      act.description
+    ].map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(",");
+    csvContent += row + "\n";
+  });
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", `سجل_النشاطات_${new Date().toISOString().slice(0, 10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  logActivity('النظام', 'تم تصدير سجل النشاطات إلى ملف Excel/CSV');
+  showToast('تم تصدير سجل النشاطات بنجاح 📥');
+}
+
+function clearActivityLog() {
+  if (confirm('هل أنت متأكد من تفريغ ومسح كامل سجل النشاطات والعمليات؟ لا يمكن التراجع عن هذا الإجراء.')) {
+    APP_DATA.activities = [];
+    setStorage(STORAGE_KEYS.ACTIVITIES, []);
+    renderActivityLogTable();
+    logActivity('النظام', 'قام المستخدم بتفريغ ومسح سجل النشاطات');
+    showToast('تم تفريغ سجل النشاطات بنجاح 🧹');
+  }
+}
+

@@ -56,6 +56,7 @@
       <button class="tab-btn" data-tab="secretariat"><span>📅</span> الأعمال والتقويم</button>
       <button class="tab-btn" data-tab="emp-requests"><span>📩</span> طلبات الموظفين</button>
       <button class="tab-btn" data-tab="users"><span>🔑</span> إدارة المستخدمين</button>
+      <button class="tab-btn" data-tab="activity-log"><span>📜</span> سجل النشاطات</button>
       <button class="tab-btn" onclick="openSyncModal()" style="margin-right: auto; color: var(--gold-600);"><span>📊</span> ربط / استيراد Google Sheets</button>
     </nav>
   </div>
@@ -905,6 +906,66 @@
             </thead>
             <tbody id="usersTableBody">
               <tr><td colspan="5" style="text-align:center;">جاري تحميل المستخدمين...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. تبويب سجل النشاطات -->
+    <section id="tab-activity-log" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title"><span>📜</span> سجل النشاطات والعمليات الرقابي</h2>
+            <p class="card-subtitle">تتبع وسجل زمني دقيق لكافة العمليات والأنشطة المنفذة في النظام مع هوية المنشئ والتوقيت</p>
+          </div>
+          <div class="btn-row" style="margin-top:0;">
+            <button class="btn btn-gold btn-sm" onclick="exportActivityLogCSV()">📥 تصدير السجل Excel/CSV</button>
+            <button class="btn btn-danger btn-sm" onclick="clearActivityLog()">🧹 تفريغ السجل</button>
+          </div>
+        </div>
+
+        <div class="field-row" style="margin-bottom:12px;">
+          <div class="field-group" style="max-width:320px;">
+            <label>بحث في السجل (الاسم، المستخدم، الإجراء)</label>
+            <input type="text" id="activitySearchInput" oninput="renderActivityLogTable()" placeholder="🔍 اكتب للبحث...">
+          </div>
+          <div class="field-group" style="max-width:240px;">
+            <label>تصفية بنوع العملية</label>
+            <select id="activityTypeFilter" onchange="renderActivityLogTable()">
+              <option value="الكل">جميع العمليات</option>
+              <option value="تسجيل دخول">تسجيل دخول</option>
+              <option value="تسجيل خروج">تسجيل خروج</option>
+              <option value="إصدار نموذج">إصدار نموذج إداري / تعيين</option>
+              <option value="إصدار خطاب">إصدار خطاب رسمي</option>
+              <option value="الموظفين">إدارة الموظفين</option>
+              <option value="المستخدمين">إدارة المستخدمين</option>
+              <option value="طلبات">طلبات الموظفين</option>
+              <option value="المهام والتقويم">المهام والتقويم</option>
+              <option value="الأرشيف">الأرشيف والإجراءات</option>
+            </select>
+          </div>
+          <div class="field-group" style="max-width:200px;">
+            <label>تصفية بالتاريخ</label>
+            <input type="date" id="activityDateFilter" onchange="renderActivityLogTable()">
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:50px;">م</th>
+                <th style="width:160px;">التاريخ والوقت</th>
+                <th style="width:120px;">المستخدم المنشئ</th>
+                <th style="width:160px;">الاسم الكامل</th>
+                <th style="width:140px;">نوع العملية</th>
+                <th>تفاصيل وبيان الإجراء والعملية</th>
+              </tr>
+            </thead>
+            <tbody id="activityLogTableBody">
+              <tr><td colspan="6" style="text-align:center;">جاري تحميل سجل النشاطات...</td></tr>
             </tbody>
           </table>
         </div>
