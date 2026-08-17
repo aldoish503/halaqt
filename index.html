@@ -8,86 +8,105 @@
 </head>
 <body>
 
+  <!-- بوابة تسجيل الدخول -->
+  <div id="loginOverlay" class="login-overlay">
+    <div class="login-card">
+      <img src="https://prh.gov.sa/images/logo_elharamain.png" alt="شعار رئاسة الشؤون الدينية" class="login-logo" onerror="this.style.display='none'">
+      <div class="login-ornament"></div>
+      <h2>نظام إدارة مكتب رئيس وحدة الشؤون التعليمية</h2>
+      <p class="login-subtitle">الشؤون التعليمية (قران) بالمسجد النبوي الشريف</p>
+      <div class="field-group">
+        <label>اسم المستخدم (الرقم الوظيفي)</label>
+        <input type="text" id="loginUsername" placeholder="أدخل الرقم الوظيفي" autocomplete="username">
+      </div>
+      <div class="field-group">
+        <label>كلمة المرور</label>
+        <input type="password" id="loginPassword" placeholder="أدخل كلمة المرور" autocomplete="current-password" onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+      <button class="login-btn" onclick="doLogin()">🔐 تسجيل الدخول</button>
+      <div id="loginError" class="login-error"></div>
+    </div>
+  </div>
+
+  <!-- حاوية التطبيق الرئيسية -->
+  <div id="appContainer" class="hidden">
+
   <!-- الترويسة الرسمية -->
   <header class="app-header">
     <div class="header-emblem">
       <img src="https://prh.gov.sa/images/logo_elharamain.png" alt="شعار رئاسة الشؤون الدينية" class="header-logo" onerror="this.style.display='none'; document.getElementById('altLogo').style.display='block';">
       <div id="altLogo" class="emblem-placeholder" style="display:none;">رئاسة الشؤون الدينية<br>باللمسجد النبوي</div>
     </div>
-
     <div class="header-title">
       <h1>نظام إدارة مكتب رئيس وحدة الشؤون التعليمية</h1>
       <p class="header-subtitle">الشؤون التعليمية (قران) بالمسجد النبوي الشريف</p>
     </div>
-
     <div class="header-emblem">
       <div class="emblem-placeholder">حلقات<br>القرآن الكريم</div>
     </div>
+    <button class="header-logout-btn" onclick="doLogout()">🚪 تسجيل خروج</button>
   </header>
 
   <!-- شريط التنقل العلوي -->
   <div class="app-nav-wrapper">
     <nav class="app-tabs">
-      <button class="tab-btn active" data-tab="correspondence">
-        <span>📋</span> المراسلات والنماذج
-      </button>
-      <button class="tab-btn" data-tab="employees">
-        <span>👥</span> قاعدة بيانات الموظفين
-      </button>
-      <button class="tab-btn" data-tab="templates">
-        <span>📁</span> إدارة قوالب النماذج
-      </button>
-      <button class="tab-btn" data-tab="dashboard">
-        <span>📊</span> أعمال رئيس الوحدة
-      </button>
-      <button class="tab-btn" data-tab="secretariat">
-        <span>📅</span> الأعمال والتقويم
-      </button>
-      <button class="tab-btn" data-tab="emp-requests">
-        <span>📩</span> طلبات الموظفين
-      </button>
-      <button class="tab-btn" onclick="openSyncModal()" style="margin-right: auto; color: var(--gold-600);">
-        <span>📊</span> ربط / استيراد Google Sheets
-      </button>
+      <button class="tab-btn active" data-tab="correspondence-new"><span>📋</span> المراسلات</button>
+      <button class="tab-btn" data-tab="employees"><span>👥</span> قاعدة بيانات الموظفين</button>
+      <button class="tab-btn" data-tab="dashboard"><span>📊</span> أعمال رئيس الوحدة</button>
+      <button class="tab-btn" data-tab="secretariat"><span>📅</span> الأعمال والتقويم</button>
+      <button class="tab-btn" data-tab="emp-requests"><span>📩</span> طلبات الموظفين</button>
+      <button class="tab-btn" data-tab="users"><span>🔑</span> إدارة المستخدمين</button>
+      <button class="tab-btn" onclick="openSyncModal()" style="margin-right: auto; color: var(--gold-600);"><span>📊</span> ربط / استيراد Google Sheets</button>
     </nav>
   </div>
 
   <main class="app-main">
 
-    <!-- 1. تبويب المراسلات والنماذج -->
-    <section id="tab-correspondence" class="tab-panel active">
+    <!-- NEW المراسلات -->
+    <section id="tab-correspondence-new" class="tab-panel active">
       <div class="card">
         <div class="card-header">
           <div>
-            <h2 class="card-title"><span>📋</span> نظام المراسلات والنماذج المعتمدة والأرشيف</h2>
+            <h2 class="card-title"><span>📋</span> نظام المراسلات والنماذج الرسمية</h2>
             <p class="card-subtitle">إصدار طلبات التعيين، الخطابات الرسمية المعتمدة، وتتبع حالة الأرشيف الصادر</p>
           </div>
         </div>
-
-        <div class="card-grid">
-          <div class="choice-card" onclick="showSection('formSelectSection')">
-            <div class="icon">📝</div>
-            <h4>إصدار نموذج إداري معتمد</h4>
-            <p>طلب تعيين مرشح جديد، إنهاء تكليف، تحويل فترة، أو إضافة فترة</p>
-          </div>
-          <div class="choice-card" onclick="showSection('openLetterSection')">
-            <div class="icon">✉️</div>
-            <h4>خطاب حر (محرر مفتوح)</h4>
-            <p>إعداد خطاب رسمي حر برقم صادر وتاريخ موحدين</p>
-          </div>
-          <div class="choice-card" onclick="showSection('archiveSection')">
-            <div class="icon">🗂️</div>
-            <h4>الأرشيف وحالة الإجراءات</h4>
-            <p>استعراض المعاملات الصادرة وتحديث حالتها (قيد التنفيذ / تم / مرفوض)</p>
-          </div>
+        
+        <!-- تبويبات فرعية لصفحة المراسلات -->
+        <div class="corr-tabs">
+          <button class="corr-tab-btn active" data-corrtab="defined-forms" onclick="switchCorrTab('defined-forms')">
+            <span>📝</span> نماذج محددة (دليل الموارد)
+          </button>
+          <button class="corr-tab-btn" data-corrtab="open-forms" onclick="switchCorrTab('open-forms')">
+            <span>✉️</span> نماذج مفتوحة
+          </button>
         </div>
       </div>
+
+      <div id="corrPanel-defined-forms" class="corr-sub-panel active">
+        <div class="card">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>م</th>
+                  <th>اسم النموذج</th>
+                  <th>التصنيف</th>
+                  <th>الوصف</th>
+                  <th>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="definedFormsTableBody">
+              </tbody>
+            </table>
+          </div>
+        </div>
 
       <!-- قسم اختيار وتعبئة النماذج -->
       <div id="formSelectSection" class="card hidden">
         <div class="card-header">
           <h3 class="card-title">إصدار نموذج إداري</h3>
-          <button class="btn btn-outline btn-sm" onclick="showSection('mainChoice')">رجوع ↩️</button>
+          <button class="btn btn-outline btn-sm" onclick="hideFormSection()">رجوع ↩️</button>
         </div>
 
         <label>نوع النموذج المطلوب إصداره (30 نموذجاً معتمداً من دليل الموارد) *</label>
@@ -221,7 +240,7 @@
 
           <div class="btn-row">
             <button class="btn btn-primary" onclick="submitCandidateForm()">💾 اعتماد وتوليد النموذج والمعاينة</button>
-            <button class="btn btn-outline" onclick="showSection('mainChoice')">إلغاء</button>
+            <button class="btn btn-outline" onclick="hideFormSection()">إلغاء</button>
           </div>
         </div>
 
@@ -463,53 +482,57 @@
 
           <div class="btn-row">
             <button class="btn btn-primary" onclick="submitDefinedForm()">💾 اعتماد واستخراج النموذج (PDF/طباعة)</button>
-            <button class="btn btn-outline" onclick="showSection('mainChoice')">إلغاء</button>
+            <button class="btn btn-outline" onclick="hideFormSection()">إلغاء</button>
           </div>
         </div>
       </div>
 
-      <!-- قسم إنشاء خطاب حر -->
-      <div id="openLetterSection" class="card hidden">
-        <div class="card-header">
-          <h3 class="card-title">إعداد خطاب حر (محرر مفتوح)</h3>
-          <button class="btn btn-outline btn-sm" onclick="showSection('mainChoice')">رجوع ↩️</button>
-        </div>
-
-        <div class="field-row">
-          <div class="field-group">
-            <label>اختر الموجه إليه الخطاب (المخاطب المعتمد من تحليل 1000 ملف) *</label>
-            <select id="openLetterAddressee">
-              <option value="فضيلة رئيس وحدة الشؤون المالية والإدارية سلمه الله">فضيلة رئيس وحدة الشؤون المالية والإدارية سلمه الله</option>
-              <option value="سعادة رئيس وحدة الشؤون المالية والإدارية حفظه الله">سعادة رئيس وحدة الشؤون المالية والإدارية حفظه الله</option>
-              <option value="فضيلة المدير التنفيذي لحلقات تحفيظ القرآن الكريم سلمه الله">فضيلة المدير التنفيذي لحلقات تحفيظ القرآن الكريم سلمه الله</option>
-              <option value="سعادة رئيس وحدة الموارد البشرية والمالية سلمه الله">سعادة رئيس وحدة الموارد البشرية والمالية سلمه الله</option>
-              <option value="سعادة رئيس شعبة المراقبة والتقويم سلمه الله">سعادة رئيس شعبة المراقبة والتقويم سلمه الله</option>
-              <option value="سعادة مسؤول شعبة التقنية سلمه الله">سعادة مسؤول شعبة التقنية سلمه الله</option>
-              <option value="فضيلة رئيس وحدة القبول والتسجيل سلمه الله">فضيلة رئيس وحدة القبول والتسجيل سلمه الله</option>
-            </select>
-          </div>
-
-          <div class="field-group">
-            <label>اختر الموظف (اختياري)</label>
-            <select id="openEmpSelect"><option value="">-- بدون موظف مخصص --</option></select>
-          </div>
-        </div>
-
-        <div class="field-group" style="margin-top:10px;">
-          <label>موضوع الخطاب *</label>
-          <input type="text" id="openLetterSubject" placeholder="أدخل عنوان موضوع الخطاب">
-        </div>
-
-        <div class="field-group" style="margin-top:10px;">
-          <label>نص الخطاب والتوجيه المباشر *</label>
-          <textarea id="openLetterBody" style="min-height:160px;" placeholder="السلام عليكم ورحمة الله وبركاته، وبعد: فنسأل الله لكم دوام التوفيق والسداد، نفيدكم بـ..."></textarea>
-        </div>
-
-        <div class="btn-row">
-          <button class="btn btn-primary" onclick="submitOpenLetter()">📄 إصدار ومعاينة الخطاب الرسمي</button>
-          <button class="btn btn-outline" onclick="showSection('mainChoice')">إلغاء</button>
-        </div>
       </div>
+
+      <div id="corrPanel-open-forms" class="corr-sub-panel">
+        <!-- قسم إنشاء خطاب حر -->
+        <div id="openLetterSection" class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title"><span>✉️</span> إعداد خطاب حر (محرر مفتوح)</h3>
+              <p class="card-subtitle">إعداد خطاب رسمي موجه لأي جهة مع إصدار رقم صادر معتمد تلقائياً</p>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field-group">
+              <label>اختر الموجه إليه الخطاب (المخاطب المعتمد) *</label>
+              <select id="openLetterAddressee">
+                <option value="فضيلة رئيس وحدة الشؤون المالية والإدارية سلمه الله">فضيلة رئيس وحدة الشؤون المالية والإدارية سلمه الله</option>
+                <option value="سعادة رئيس وحدة الشؤون المالية والإدارية حفظه الله">سعادة رئيس وحدة الشؤون المالية والإدارية حفظه الله</option>
+                <option value="فضيلة المدير التنفيذي لحلقات تحفيظ القرآن الكريم سلمه الله">فضيلة المدير التنفيذي لحلقات تحفيظ القرآن الكريم سلمه الله</option>
+                <option value="سعادة رئيس وحدة الموارد البشرية والمالية سلمه الله">سعادة رئيس وحدة الموارد البشرية والمالية سلمه الله</option>
+                <option value="سعادة رئيس شعبة المراقبة والتقويم سلمه الله">سعادة رئيس شعبة المراقبة والتقويم سلمه الله</option>
+                <option value="سعادة مسؤول شعبة التقنية سلمه الله">سعادة مسؤول شعبة التقنية سلمه الله</option>
+                <option value="فضيلة رئيس وحدة القبول والتسجيل سلمه الله">فضيلة رئيس وحدة القبول والتسجيل سلمه الله</option>
+              </select>
+            </div>
+
+            <div class="field-group">
+              <label>اختر الموظف (اختياري)</label>
+              <select id="openEmpSelect"><option value="">-- بدون موظف مخصص --</option></select>
+            </div>
+          </div>
+
+          <div class="field-group" style="margin-top:10px;">
+            <label>موضوع الخطاب *</label>
+            <input type="text" id="openLetterSubject" placeholder="أدخل عنوان موضوع الخطاب">
+          </div>
+
+          <div class="field-group" style="margin-top:10px;">
+            <label>نص الخطاب والتوجيه المباشر *</label>
+            <textarea id="openLetterBody" style="min-height:160px;" placeholder="السلام عليكم ورحمة الله وبركاته، وبعد: فنسأل الله لكم دوام التوفيق والسداد، نفيدكم بـ..."></textarea>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="submitOpenLetter()">📄 إصدار ومعاينة الخطاب الرسمي</button>
+          </div>
+        </div>
 
       <!-- قسم الأرشيف وحالة الإجراءات -->
       <div id="archiveSection" class="card">
@@ -547,6 +570,7 @@
             </tbody>
           </table>
         </div>
+      </div>
       </div>
     </section>
 
@@ -586,36 +610,6 @@
             </thead>
             <tbody id="employeesTableBody">
               <tr><td colspan="8" style="text-align:center;">جاري تحميل سجل الموظفين...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- 3. تبويب إدارة قوالب النماذج -->
-    <section id="tab-templates" class="tab-panel">
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <h2 class="card-title">📁 إدارة قوالب النماذج والمستندات</h2>
-            <p class="card-subtitle">تخزين وحفظ القوالب الرسمية للاستخدام السريع في إصدار المعاملات</p>
-          </div>
-          <button class="btn btn-primary btn-sm" onclick="openTemplateModal()">➕ إضافة قالب جديد</button>
-        </div>
-
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>اسم النموذج الرسمى (دليل الموارد)</th>
-                <th>التصنيف الإداري</th>
-                <th>بيان الاستخدام والإجراء</th>
-                <th>إجراءات التعبئة والطباعة والتحميل</th>
-                <th>إدارة</th>
-              </tr>
-            </thead>
-            <tbody id="templatesTableBody">
-              <tr><td colspan="5" style="text-align:center;">جاري تحميل القوالب الرسمية الـ 30...</td></tr>
             </tbody>
           </table>
         </div>
@@ -710,94 +704,69 @@
               <input type="date" id="req_start_date">
             </div>
             <div class="field-group">
-              <label>تاريخ النهاية / السريان (للحالات المؤقتة)</label>
+              <label>تاريخ النهاية (اختياري)</label>
               <input type="date" id="req_end_date">
             </div>
           </div>
-
-          <div class="field-row">
-            <div class="field-group">
-              <label id="req_extra_label">الفترة / المسمى / القسم المطلوب</label>
-              <input type="text" id="req_extra_val" placeholder="أدخل البيان المطلوب">
-            </div>
-          </div>
-
           <div class="field-group" style="margin-top:10px;">
-            <label>مبررات وتفاصيل الطلب النصية *</label>
-            <textarea id="req_body_text" rows="3" placeholder="اكتب مبررات الطلب وتفاصيل الموضوع المرفوع لرئيس الوحدة..."></textarea>
-          </div>
-
-          <label style="margin-top:10px; font-weight:bold;">المرفقات الداعمة للطلب (اختر ما تم إرفاقه):</label>
-          <div class="checkbox-group" style="margin-bottom:14px;">
-            <label class="checkbox-label"><input type="checkbox" id="req_att_cv"> السيرة الذاتية</label>
-            <label class="checkbox-label"><input type="checkbox" id="req_att_id"> صورة الهوية</label>
-            <label class="checkbox-label"><input type="checkbox" id="req_att_cert"> المؤهل العلمي / الخبرات</label>
-            <label class="checkbox-label"><input type="checkbox" id="req_att_rec"> التوصية / التزكية / الإعفاء</label>
-            <label class="checkbox-label"><input type="checkbox" id="req_att_other"> مستندات أخرى</label>
+            <label>تفاصيل ومبررات الطلب (مهم جداً) *</label>
+            <textarea id="req_details" placeholder="اشرح تفاصيل الطلب والمبررات بوضوح..."></textarea>
           </div>
         </div>
 
-        <button class="btn btn-primary" onclick="submitEmpRequest()" style="width:100%; font-size:1.05rem; margin-top:10px;">
-          📤 تقديم الطلب وإرساله للإدارة
-        </button>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="submitEmployeeRequest()">📤 إرسال الطلب للاعتماد</button>
+          <button class="btn btn-outline" onclick="showReqSubSection('reqManageCard')">إلغاء</button>
+        </div>
       </div>
 
-      <!-- لوحة تحكم الإدارة والمعالجة (Manager View) -->
+      <!-- واجهة إدارة الطلبات (Manager View) -->
       <div id="reqManageCard" class="card hidden">
         <div class="card-header">
-          <h3 class="card-title">📊 لوحة تحكم متابعة ومعالجة الطلبات المقدمة</h3>
-          <div style="display:flex; gap:8px;">
-            <select id="req_status_filter" onchange="renderEmpRequestsTable()" style="max-width:180px;">
-              <option value="الكل">جميع الحالات</option>
-              <option value="قيد الانتظار" selected>قيد الانتظار ⏳</option>
-              <option value="مقبول">مقبول ✅</option>
-              <option value="مرفوض">مرفوض ❌</option>
-            </select>
-            <button class="btn btn-outline btn-sm" onclick="showReqSubSection('reqSubmitCard')">تقديم طلب جديد 📝</button>
-          </div>
+          <h3 class="card-title">📊 لوحة التحكم وإدارة طلبات الموظفين</h3>
+          <button class="btn btn-outline btn-sm" onclick="showReqSubSection('reqSubmitCard')">تقديم طلب جديد ➕</button>
         </div>
 
-        <div class="table-container">
-          <table class="data-table">
+        <div class="table-wrapper">
+          <table>
             <thead>
               <tr>
-                <th>م</th>
-                <th>اسم الموظف</th>
-                <th>المسمى الوظيفي</th>
-                <th>نوع الطلب</th>
+                <th>رقم الطلب</th>
                 <th>تاريخ التقديم</th>
-                <th>الحالة</th>
-                <th>ملاحظات الإدارة</th>
-                <th>الإجراءات المعالجة والطباعة</th>
+                <th>الموظف</th>
+                <th>نوع الطلب</th>
+                <th>حالة الطلب</th>
+                <th>إجراءات الإدارة (الاعتماد / الرفض)</th>
               </tr>
             </thead>
-            <tbody id="empRequestsTableBody">
-              <tr><td colspan="8" style="text-align:center;">لا توجد طلبات قدمت حتى الآن...</td></tr>
+            <tbody id="reqTableBody">
+              <tr><td colspan="6" style="text-align:center;">جاري تحميل الطلبات...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
     </section>
+
+    <!-- 4. تبويب أعمال رئيس الوحدة -->
     <section id="tab-dashboard" class="tab-panel">
       <div class="card">
         <div class="card-header">
-          <h2 class="card-title">📊 لوحة تحكم رئيس الوحدة الإحصائية</h2>
+          <h2 class="card-title">📊 إحصاءات عامة ومؤشرات الأداء</h2>
         </div>
-
-        <div class="card-grid">
-          <div class="choice-card" style="background:linear-gradient(135deg, #14532d, #1b6e3c); color:#fff;">
-            <div style="font-size:2rem; font-weight:800;" id="stat-total">0</div>
-            <div>إجمالي المعاملات الصادرة</div>
+        <div class="dashboard-stats">
+          <div class="stat-card">
+            <div style="font-size:2rem; font-weight:800;" id="stat-emp-count">0</div>
+            <div>إجمالي الموظفين/المعلمين</div>
           </div>
-          <div class="choice-card" style="background:linear-gradient(135deg, #1b6e3c, #22c55e); color:#fff;">
-            <div style="font-size:2rem; font-weight:800;" id="stat-today">0</div>
-            <div>صادر اليوم</div>
+          <div class="stat-card">
+            <div style="font-size:2rem; font-weight:800;" id="stat-forms-count">0</div>
+            <div>معاملات ونماذج صادرة</div>
           </div>
-          <div class="choice-card" style="background:linear-gradient(135deg, #991b1b, #ef4444); color:#fff;">
+          <div class="stat-card">
             <div style="font-size:2rem; font-weight:800;" id="stat-pending">0</div>
-            <div>مهام قيد التنفيذ</div>
+            <div>مهام قيد الانتظار</div>
           </div>
-          <div class="choice-card" style="background:linear-gradient(135deg, #15803d, #16a34a); color:#fff;">
+          <div class="stat-card">
             <div style="font-size:2rem; font-weight:800;" id="stat-done">0</div>
             <div>مهام مكتملة</div>
           </div>
@@ -914,6 +883,34 @@
       </div>
     </section>
 
+    <section id="tab-users" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title"><span>🔑</span> إدارة المستخدمين والصلاحيات</h2>
+            <p class="card-subtitle">إضافة وتعديل وحذف مستخدمي النظام وتحديد الصلاحيات</p>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openUserModal()">➕ إضافة مستخدم جديد</button>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>اسم المستخدم</th>
+                <th>الاسم الكامل</th>
+                <th>الصلاحية</th>
+                <th>الحالة</th>
+                <th>إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <tr><td colspan="5" style="text-align:center;">جاري تحميل المستخدمين...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- Modal إضافة/تعديل موظف -->
@@ -998,36 +995,6 @@
     </div>
   </div>
 
-  <!-- Modal إضافة قالب جديد -->
-  <div id="templateModal" class="modal-overlay hidden">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 class="modal-title">إضافة قالب مستند جديد</h3>
-        <button class="modal-close" onclick="closeTemplateModal()">&times;</button>
-      </div>
-
-      <div class="field-group">
-        <label>اسم النموذج *</label>
-        <input type="text" id="tplNameInput" placeholder="مثال: نموذج طلب إجازة / نقل">
-      </div>
-
-      <div class="field-group" style="margin-top:10px;">
-        <label>الوصف المختصر</label>
-        <input type="text" id="tplDescInput" placeholder="وصف استخدام النموذج">
-      </div>
-
-      <div class="field-group" style="margin-top:10px;">
-        <label>رابط القالب أو المستند (Google Docs / Drive)</label>
-        <input type="text" id="tplDocIdInput" placeholder="https://docs.google.com/document/d/.../edit">
-      </div>
-
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="submitNewTemplate()">💾 حفظ وتفعيل القالب</button>
-        <button class="btn btn-outline" onclick="closeTemplateModal()">إلغاء</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Modal المعاينة والطباعة الرسمية -->
   <div id="printModal" class="modal-overlay hidden">
     <div class="modal-card" style="max-width:850px;">
@@ -1076,9 +1043,50 @@
     </div>
   </div>
 
-  <!-- التنبيه الفوري -->
-  <div id="toast" class="toast"></div>
+  <div id="userModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="userModalTitle" class="modal-title">إضافة مستخدم جديد</h3>
+        <button class="modal-close" onclick="closeUserModal()">&times;</button>
+      </div>
+      <input type="hidden" id="userRowIndex">
+      <div class="field-group">
+        <label>اسم المستخدم (الرقم الوظيفي) *</label>
+        <input type="text" id="userUsernameInput" placeholder="مثل: 2142">
+      </div>
+      <div class="field-group" style="margin-top:10px;">
+        <label>كلمة المرور *</label>
+        <input type="text" id="userPasswordInput" placeholder="أدخل كلمة المرور">
+      </div>
+      <div class="field-group" style="margin-top:10px;">
+        <label>الاسم الكامل *</label>
+        <input type="text" id="userFullnameInput" placeholder="الاسم الكامل للمستخدم">
+      </div>
+      <div class="field-row" style="margin-top:10px;">
+        <div class="field-group">
+          <label>الصلاحية</label>
+          <select id="userRoleInput">
+            <option value="مدير النظام">مدير النظام</option>
+            <option value="مستخدم عادي">مستخدم عادي</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>الحالة</label>
+          <select id="userStatusInput">
+            <option value="نشط">نشط</option>
+            <option value="معطل">معطل</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="submitUserForm()">💾 حفظ المستخدم</button>
+        <button class="btn btn-outline" onclick="closeUserModal()">إلغاء</button>
+      </div>
+    </div>
+  </div>
 
-  <script src="app.js?v=20260812_2"></script>
+  <div id="toast" class="toast"></div>
+  <script src="app.js?v=20260816"></script>
+  </div><!-- end appContainer -->
 </body>
 </html>

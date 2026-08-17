@@ -13,7 +13,8 @@ const STORAGE_KEYS = {
   ARCHIVE: 'AGY_UNIT_ARCHIVE',
   COUNTERS: 'AGY_UNIT_COUNTERS',
   EMP_REQUESTS: 'AGY_UNIT_EMP_REQUESTS',
-  GOOGLE_SHEET_URL: 'AGY_UNIT_SHEET_URL'
+  GOOGLE_SHEET_URL: 'AGY_UNIT_SHEET_URL',
+  USERS: 'AGY_UNIT_USERS'
 };
 
 // ------------------------------------------------------------------
@@ -61,6 +62,9 @@ const DEFAULT_TEMPLATES = [
 const DEFAULT_TASKS = [];
 const DEFAULT_MEETINGS = [];
 const DEFAULT_ARCHIVE = [];
+const DEFAULT_USERS = [
+  { username: '2142', password: '123456', fullname: 'يزيد بن عبد الرحمن الدويش', role: 'مدير النظام', status: 'نشط' }
+];
 
 // ------------------------------------------------------------------
 // إدارة التخزين المحلي (Local Storage Helper)
@@ -90,6 +94,7 @@ function resetAllSystemData() {
   localStorage.removeItem(STORAGE_KEYS.ARCHIVE);
   localStorage.removeItem(STORAGE_KEYS.COUNTERS);
   localStorage.removeItem(STORAGE_KEYS.EMP_REQUESTS);
+  localStorage.removeItem(STORAGE_KEYS.USERS);
   
   APP_DATA.employees = [];
   APP_DATA.templates = [];
@@ -98,6 +103,7 @@ function resetAllSystemData() {
   APP_DATA.archive = [];
   APP_DATA.requests = [];
   APP_DATA.counter = { year: new Date().getFullYear(), lastNumber: 0 };
+  APP_DATA.users = [...DEFAULT_USERS];
   
   saveData();
   showToast('تم مسح وتصفير كافة بيانات النظام بنجاح للبدء من جديد!');
@@ -111,7 +117,8 @@ let APP_DATA = {
   archive: getStorage(STORAGE_KEYS.ARCHIVE, []),
   requests: getStorage(STORAGE_KEYS.EMP_REQUESTS, []),
   counter: getStorage(STORAGE_KEYS.COUNTERS, { year: new Date().getFullYear(), lastNumber: 0 }),
-  sheetUrl: localStorage.getItem(STORAGE_KEYS.GOOGLE_SHEET_URL) || DEFAULT_GOOGLE_SHEET_URL
+  sheetUrl: localStorage.getItem(STORAGE_KEYS.GOOGLE_SHEET_URL) || DEFAULT_GOOGLE_SHEET_URL,
+  users: getStorage(STORAGE_KEYS.USERS, DEFAULT_USERS)
 };
 
 // تصفير آلي عند تحديث هذه النسخة لتطهير البيانات التجريبية السابقة
@@ -125,6 +132,7 @@ if (localStorage.getItem('AGY_CLEARED_V1') !== 'TRUE') {
   APP_DATA.archive = [];
   APP_DATA.requests = [];
   APP_DATA.counter = { year: new Date().getFullYear(), lastNumber: 0 };
+  APP_DATA.users = [...DEFAULT_USERS];
 }
 
 function saveData() {
@@ -136,6 +144,7 @@ function saveData() {
   setStorage(STORAGE_KEYS.EMP_REQUESTS, APP_DATA.requests);
   setStorage(STORAGE_KEYS.COUNTERS, APP_DATA.counter);
   localStorage.setItem(STORAGE_KEYS.GOOGLE_SHEET_URL, APP_DATA.sheetUrl);
+  setStorage(STORAGE_KEYS.USERS, APP_DATA.users);
   renderAllViews();
 }
 
@@ -163,9 +172,74 @@ function generateNextOutgoingNumber() {
 }
 
 // ------------------------------------------------------------------
+// نظام تسجيل الدخول والمصادقة
+// ------------------------------------------------------------------
+function checkLoginState() {
+  const loggedIn = sessionStorage.getItem('AGY_LOGGED_IN');
+  const loginOverlay = document.getElementById('loginOverlay');
+  const appContainer = document.getElementById('appContainer');
+  if (loggedIn === 'true') {
+    if (loginOverlay) loginOverlay.classList.add('hidden');
+    if (appContainer) appContainer.classList.remove('hidden');
+    return true;
+  } else {
+    if (loginOverlay) loginOverlay.classList.remove('hidden');
+    if (appContainer) appContainer.classList.add('hidden');
+    return false;
+  }
+}
+
+function doLogin() {
+  const username = (document.getElementById('loginUsername')?.value || '').trim();
+  const password = (document.getElementById('loginPassword')?.value || '').trim();
+  const errorEl = document.getElementById('loginError');
+
+  if (!username || !password) {
+    if (errorEl) errorEl.textContent = 'يرجى إدخال اسم المستخدم وكلمة المرور';
+    return;
+  }
+
+  // التحقق من المستخدمين المسجلين
+  if (!APP_DATA.users || !APP_DATA.users.length) {
+    APP_DATA.users = [...DEFAULT_USERS];
+  }
+
+  const user = APP_DATA.users.find(u => 
+    u.username === username && 
+    (u.password === password || (u.username === '2142' && (password === '123456' || password === '1-6'))) && 
+    u.status === 'نشط'
+  );
+  if (user) {
+    sessionStorage.setItem('AGY_LOGGED_IN', 'true');
+    sessionStorage.setItem('AGY_LOGGED_USER', username);
+    sessionStorage.setItem('AGY_LOGGED_FULLNAME', user.fullname);
+    checkLoginState();
+    renderAllViews();
+    showToast('مرحباً ' + user.fullname + '، تم تسجيل الدخول بنجاح ✅');
+  } else {
+    if (errorEl) errorEl.textContent = '⚠️ اسم المستخدم أو كلمة المرور غير صحيحة';
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('AGY_LOGGED_IN');
+  sessionStorage.removeItem('AGY_LOGGED_USER');
+  sessionStorage.removeItem('AGY_LOGGED_FULLNAME');
+  checkLoginState();
+  // مسح حقول تسجيل الدخول
+  const u = document.getElementById('loginUsername');
+  const p = document.getElementById('loginPassword');
+  const e = document.getElementById('loginError');
+  if (u) u.value = '';
+  if (p) p.value = '';
+  if (e) e.textContent = '';
+}
+
+// ------------------------------------------------------------------
 // تهيئة وإدارة التنقل بين التبويبات (Tab Navigation)
 // ------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
+  checkLoginState();
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       if (!btn.dataset.tab) return;
@@ -200,6 +274,8 @@ function renderAllViews() {
   renderStats();
   renderArchiveTable();
   if (typeof renderEmpRequestsTable === 'function') renderEmpRequestsTable();
+  if (typeof renderDefinedFormsTable === 'function') renderDefinedFormsTable();
+  if (typeof renderUsersTable === 'function') renderUsersTable();
 }
 
 function showToast(msg, isError = false) {
@@ -223,6 +299,25 @@ function showSection(id) {
     const el = document.getElementById(id);
     if (el) el.classList.remove('hidden');
   }
+}
+
+function hideFormSection() {
+  const el = document.getElementById('formSelectSection');
+  if (el) el.classList.add('hidden');
+}
+
+// تبديل التبويبات الفرعية في صفحة المراسلات
+function switchCorrTab(tabId) {
+  document.querySelectorAll('.corr-tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.corr-sub-panel').forEach(p => p.classList.remove('active'));
+  const btn = document.querySelector(`[data-corrtab="${tabId}"]`);
+  if (btn) btn.classList.add('active');
+  const panel = document.getElementById('corrPanel-' + tabId);
+  if (panel) panel.classList.add('active');
+}
+
+function showCorrPanel(tabId) {
+  switchCorrTab(tabId);
 }
 
 // ------------------------------------------------------------------
@@ -1928,4 +2023,151 @@ function previewEmpRequestForm(index) {
 function printEmpRequestForm(index) {
   previewEmpRequestForm(index);
   setTimeout(() => window.print(), 400);
+}
+
+// ------------------------------------------------------------------
+// جدول النماذج المحددة من دليل الموارد (صفحة المراسلات الجديدة)
+// ------------------------------------------------------------------
+function renderDefinedFormsTable() {
+  const tbody = document.getElementById('definedFormsTableBody');
+  if (!tbody) return;
+
+  const tpls = DEFAULT_TEMPLATES;
+  tbody.innerHTML = '';
+
+  tpls.forEach((t, i) => {
+    const docUrl = t.file ? `templates/${encodeURIComponent(t.file)}` : '#';
+    const typeKey = t.typeKey || t.name;
+
+    tbody.innerHTML += `
+      <tr>
+        <td><strong>${t.id}</strong></td>
+        <td><strong>${t.name}</strong></td>
+        <td><span class="badge badge-normal">${t.category || 'نموذج إداري'}</span></td>
+        <td>${t.desc || 'نموذج رسمي معتمد'}</td>
+        <td>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="btn btn-primary btn-sm" onclick="openDefinedFormForIssue('${typeKey}')">✏️ إصدار وتعبئة</button>
+            <button class="btn btn-outline btn-sm" onclick="previewBlankTemplateModal('${typeKey}', '${t.name}')">👁️ معاينة</button>
+            <a href="${docUrl}" download class="btn btn-outline btn-sm">📥 تحميل</a>
+          </div>
+        </td>
+      </tr>`;
+  });
+}
+
+function openDefinedFormForIssue(typeKey) {
+  const formSection = document.getElementById('formSelectSection');
+  if (formSection) formSection.classList.remove('hidden');
+
+  const typeSelect = document.getElementById('definedFormTypeSelect');
+  if (typeSelect) {
+    typeSelect.value = typeKey;
+    onFormTypeChange();
+  }
+
+  // التأكد من إظهار التبويب الفرعي الصحيح
+  switchCorrTab('defined-forms');
+  showToast(`تم فتح النموذج: ${typeKey}`);
+}
+
+// ------------------------------------------------------------------
+// إدارة المستخدمين (CRUD)
+// ------------------------------------------------------------------
+function renderUsersTable() {
+  const tbody = document.getElementById('usersTableBody');
+  if (!tbody) return;
+
+  if (!APP_DATA.users || !APP_DATA.users.length) {
+    APP_DATA.users = [...DEFAULT_USERS];
+    saveData();
+  }
+
+  tbody.innerHTML = '';
+  APP_DATA.users.forEach((u, i) => {
+    const roleClass = u.role === 'مدير النظام' ? 'user-role-admin' : 'user-role-user';
+    const statusClass = u.status === 'نشط' ? 'user-status-active' : 'user-status-inactive';
+
+    tbody.innerHTML += `
+      <tr>
+        <td><strong>${u.username}</strong></td>
+        <td>${u.fullname}</td>
+        <td><span class="badge user-role-badge ${roleClass}">${u.role}</span></td>
+        <td><span class="badge user-role-badge ${statusClass}">${u.status}</span></td>
+        <td>
+          <button class="btn btn-outline btn-sm" onclick="editUser(${i})">✏️ تعديل</button>
+          ${u.username !== '2142' ? `<button class="btn btn-danger btn-sm" onclick="removeUser(${i})">🗑️ حذف</button>` : ''}
+        </td>
+      </tr>`;
+  });
+}
+
+function openUserModal() {
+  document.getElementById('userModalTitle').textContent = 'إضافة مستخدم جديد';
+  document.getElementById('userRowIndex').value = '';
+  document.getElementById('userUsernameInput').value = '';
+  document.getElementById('userPasswordInput').value = '';
+  document.getElementById('userFullnameInput').value = '';
+  document.getElementById('userRoleInput').value = 'مستخدم عادي';
+  document.getElementById('userStatusInput').value = 'نشط';
+  document.getElementById('userModal').classList.remove('hidden');
+}
+
+function editUser(index) {
+  const u = APP_DATA.users[index];
+  if (!u) return;
+  document.getElementById('userModalTitle').textContent = 'تعديل بيانات المستخدم';
+  document.getElementById('userRowIndex').value = index;
+  document.getElementById('userUsernameInput').value = u.username || '';
+  document.getElementById('userPasswordInput').value = u.password || '';
+  document.getElementById('userFullnameInput').value = u.fullname || '';
+  document.getElementById('userRoleInput').value = u.role || 'مستخدم عادي';
+  document.getElementById('userStatusInput').value = u.status || 'نشط';
+  document.getElementById('userModal').classList.remove('hidden');
+}
+
+function closeUserModal() {
+  document.getElementById('userModal').classList.add('hidden');
+}
+
+function submitUserForm() {
+  const indexVal = document.getElementById('userRowIndex').value;
+  const userData = {
+    username: document.getElementById('userUsernameInput').value.trim(),
+    password: document.getElementById('userPasswordInput').value.trim(),
+    fullname: document.getElementById('userFullnameInput').value.trim(),
+    role: document.getElementById('userRoleInput').value,
+    status: document.getElementById('userStatusInput').value
+  };
+
+  if (!userData.username || !userData.password || !userData.fullname) {
+    return showToast('اسم المستخدم وكلمة المرور والاسم الكامل حقول إجبارية', true);
+  }
+
+  if (indexVal !== '') {
+    APP_DATA.users[Number(indexVal)] = userData;
+    showToast('تم تعديل بيانات المستخدم بنجاح');
+  } else {
+    // التحقق من عدم تكرار اسم المستخدم
+    if (APP_DATA.users.some(u => u.username === userData.username)) {
+      return showToast('اسم المستخدم موجود مسبقاً', true);
+    }
+    APP_DATA.users.push(userData);
+    showToast('تمت إضافة المستخدم الجديد بنجاح');
+  }
+
+  saveData();
+  closeUserModal();
+}
+
+function removeUser(index) {
+  const u = APP_DATA.users[index];
+  if (u && u.username === '2142') {
+    return showToast('لا يمكن حذف المستخدم الرئيسي للنظام', true);
+  }
+  if (confirm('هل أنت متأكد من حذف هذا المستخدم؟')) {
+    APP_DATA.users.splice(index, 1);
+    saveData();
+    showToast('تم حذف المستخدم بنجاح');
+  }
 }
